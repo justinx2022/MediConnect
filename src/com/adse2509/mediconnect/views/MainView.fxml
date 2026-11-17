@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.adse2509.mediconnect.controllers.MainController"
+            stylesheets="@../styles/mediconnect.css"
+            prefWidth="1180" prefHeight="780">
+
+    <!-- ==================================================================================
+         LEFT SIDEBAR NAVIGATION (Matching Aptech Flowchart Figure 1.2)
+         ================================================================================== -->
+    <left>
+        <VBox styleClass="sidebar" spacing="16">
+            <!-- Brand -->
+            <VBox spacing="4">
+                <HBox alignment="CENTER_LEFT" spacing="8">
+                    <Label text="🏥" style="-fx-font-size: 22px;"/>
+                    <Label text="MediConnect" styleClass="brand-title"/>
+                </HBox>
+                <Label text="Philadelphia Medical Center" styleClass="brand-subtitle"/>
+            </VBox>
+
+            <Separator style="-fx-opacity: 0.15;"/>
+
+            <!-- Active Staff Profile Badge -->
+            <HBox spacing="10" alignment="CENTER_LEFT" style="-fx-background-color: #1E293B; -fx-padding: 10; -fx-background-radius: 8;">
+                <Label text="👤" style="-fx-font-size: 18px;"/>
+                <VBox spacing="2">
+                    <Label fx:id="lblStaffName" text="Group 3" style="-fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 12px;"/>
+                    <Label fx:id="lblStaffRole" text="Staff ID: ST01 (Administrator)" style="-fx-text-fill: #94A3B8; -fx-font-size: 10px;"/>
+                </VBox>
+            </HBox>
+
+            <!-- Navigation Buttons matching Figure 1.2 -->
+            <VBox spacing="8" VBox.vgrow="ALWAYS">
+                <Label text="MAIN MENU" style="-fx-text-fill: #64748B; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 8 0 0 4;"/>
+                <Button fx:id="btnNavAdd" text="1. Add New Records" styleClass="nav-button, active" onAction="#handleNavAdd"/>
+                <Button fx:id="btnNavUpdate" text="2. Update Details" styleClass="nav-button" onAction="#handleNavUpdate"/>
+                <Button fx:id="btnNavBilling" text="3. Generate Bills" styleClass="nav-button" onAction="#handleNavBilling"/>
+                <Button fx:id="btnNavDirectory" text="4. Display Information" styleClass="nav-button" onAction="#handleNavDirectory"/>
+            </VBox>
+
+            <Separator style="-fx-opacity: 0.15;"/>
+
+            <!-- System Stats & Exit -->
+            <VBox spacing="8">
+                <Label fx:id="lblDbStatus" text="● SQL Server: Online" style="-fx-text-fill: #10B981; -fx-font-size: 11px;"/>
+                <Button fx:id="btnExit" text="5. Exit Application" styleClass="btn-danger" maxWidth="Infinity" onAction="#handleExit"/>
+            </VBox>
+        </VBox>
+    </left>
+
+    <!-- ==================================================================================
+         CENTER CONTENT AREA (TabPane with 4 Screens)
+         ================================================================================== -->
+    <center>
+        <StackPane styleClass="content-area">
+            <TabPane fx:id="mainTabPane" side="TOP" style="-fx-tab-max-height: 0; -fx-tab-min-height: 0;">
+
+                <!-- ======================================================================
+                     SCREEN 1: ADD NEW RECORDS (Doctor & Patient)
+                     ====================================================================== -->
+                <Tab text="Add New Records">
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                        <VBox spacing="20">
+                            <!-- Header -->
+                            <HBox alignment="CENTER_LEFT" spacing="12">
+                                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                    <Label text="1. Add New Records" styleClass="screen-title"/>
+                                    <Label text="Register new patients and medical specialists into Philadelphia Medical Center database" styleClass="screen-subtitle"/>
+                                </VBox>
+                                <Label fx:id="toastLabel1" text="" visible="false"/>
+                            </HBox>
+
+                            <!-- Sub-Option Toggle: Patient vs Doctor -->
+                            <HBox spacing="10" alignment="CENTER_LEFT">
+                                <Label text="Select Record Type:" style="-fx-font-weight: bold;"/>
+                                <RadioButton fx:id="rbAddPatient" text="A. Patient Details" selected="true" onAction="#handleRecordTypeToggle">
+                                    <toggleGroup>
+                                        <ToggleGroup fx:id="recordTypeGroup"/>
+                                    </toggleGroup>
+                                </RadioButton>
+                                <RadioButton fx:id="rbAddDoctor" text="B. Doctor Details" toggleGroup="$recordTypeGroup" onAction="#handleRecordTypeToggle"/>
+                            </HBox>
+
+                            <!-- Patient Form Card -->
+                            <VBox fx:id="boxPatientForm" spacing="16" styleClass="card">
+                                <Label text="Patient Registration (dbo.Patient)" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #0F172A;"/>
+
+                                <GridPane hgap="16" vgap="14">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="50"/>
+                                        <ColumnConstraints percentWidth="50"/>
+                                    </columnConstraints>
+
+                                    <!-- Row 0 -->
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                        <Label text="Patient ID (e.g. P005):"/>
+                                        <TextField fx:id="txtPatId" promptText="P005"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <Label text="Full Name:"/>
+                                        <TextField fx:id="txtPatName" promptText="Enter patient full name"/>
+                                    </VBox>
+
+                                    <!-- Row 1 -->
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                        <Label text="Residential Address:"/>
+                                        <TextField fx:id="txtPatAddress" promptText="Street address, city"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <Label text="Phone Number:"/>
+                                        <TextField fx:id="txtPatPhone" promptText="+254 700 000 000"/>
+                                    </VBox>
+
+                                    <!-- Row 2 -->
+                                    <HBox spacing="12" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                            <Label text="Age:"/>
+                                            <TextField fx:id="txtPatAge" promptText="35"/>
+                                        </VBox>
+                                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                            <Label text="Gender:"/>
+                                            <ComboBox fx:id="cmbPatGender" maxWidth="Infinity"/>
+                                        </VBox>
+                                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                            <Label text="Blood Group:"/>
+                                            <ComboBox fx:id="cmbPatBlood" maxWidth="Infinity"/>
+                                        </VBox>
+                                    </HBox>
+
+                                    <HBox spacing="12" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                            <Label text="Weight (kg):"/>
+                                            <TextField fx:id="txtPatWeight" promptText="70.0"/>
+                                        </VBox>
+                                        <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                            <Label text="Height (cm):"/>
+                                            <TextField fx:id="txtPatHeight" promptText="175.0"/>
+                                        </VBox>
+                                    </HBox>
+                                </GridPane>
+
+                                <Separator/>
+
+                                <!-- Optional Initial Visit / Checkup Details -->
+                                <Label text="Initial Visit Details (dbo.PatientDetails)" style="-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #334155;"/>
+                                <GridPane hgap="16" vgap="14">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="33"/>
+                                        <ColumnConstraints percentWidth="33"/>
+                                        <ColumnConstraints percentWidth="34"/>
+                                    </columnConstraints>
+                                    <VBox spacing="6" GridPane.columnIndex="0">
+                                        <Label text="Attending Doctor:"/>
+                                        <ComboBox fx:id="cmbPatDoctor" maxWidth="Infinity"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1">
+                                        <Label text="Ailment / Reason for Visit:"/>
+                                        <TextField fx:id="txtPatAilment" promptText="e.g. General Consultation"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="2">
+                                        <Label text="Description / Symptoms:"/>
+                                        <TextField fx:id="txtPatDesc" promptText="Clinical notes"/>
+                                    </VBox>
+                                </GridPane>
+
+                                <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
+                                    <Button text="Clear Fields" styleClass="btn-secondary" onAction="#handleClearPatientForm"/>
+                                    <Button text="Save Patient Record" styleClass="btn-primary" onAction="#handleSavePatient"/>
+                                </HBox>
+                            </VBox>
+
+                            <!-- Doctor Form Card (Hidden by default unless selected) -->
+                            <VBox fx:id="boxDoctorForm" spacing="16" styleClass="card" visible="false" managed="false">
+                                <Label text="Doctor Registration (dbo.Doctor)" style="-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #0F172A;"/>
+
+                                <GridPane hgap="16" vgap="14">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="50"/>
+                                        <ColumnConstraints percentWidth="50"/>
+                                    </columnConstraints>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                        <Label text="Doctor ID (e.g. D005):"/>
+                                        <TextField fx:id="txtDocId" promptText="D005"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <Label text="Doctor Full Name:"/>
+                                        <TextField fx:id="txtDocName" promptText="Dr. Firstname Lastname"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                        <Label text="Specialization:"/>
+                                        <TextField fx:id="txtDocSpec" promptText="e.g. Cardiology, Neurology"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <Label text="Phone Number:"/>
+                                        <TextField fx:id="txtDocPhone" promptText="+254 700 000 000"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                        <Label text="Email Address:"/>
+                                        <TextField fx:id="txtDocEmail" promptText="doctor@pmc.org"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                        <Label text="Room Number:"/>
+                                        <TextField fx:id="txtDocRoom" promptText="Suite 101"/>
+                                    </VBox>
+                                </GridPane>
+
+                                <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
+                                    <Button text="Clear Fields" styleClass="btn-secondary" onAction="#handleClearDoctorForm"/>
+                                    <Button text="Save Doctor Record" styleClass="btn-primary" onAction="#handleSaveDoctor"/>
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- ======================================================================
+                     SCREEN 2: UPDATE DETAILS (Doctor & Patient)
+                     ====================================================================== -->
+                <Tab text="Update Details">
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                        <VBox spacing="20">
+                            <HBox alignment="CENTER_LEFT" spacing="12">
+                                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                    <Label text="2. Update Details" styleClass="screen-title"/>
+                                    <Label text="Select a doctor or patient to edit consultation room, contact, or clinical status" styleClass="screen-subtitle"/>
+                                </VBox>
+                                <Label fx:id="toastLabel2" text="" visible="false"/>
+                            </HBox>
+
+                            <VBox spacing="16" styleClass="card">
+                                <Label text="Select Doctor to Update:" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <ComboBox fx:id="cmbUpdateDoctorSelect" prefWidth="360" promptText="-- Select Doctor to Load --" onAction="#handleDoctorSelectedForUpdate"/>
+                                    <Button text="Reload List" styleClass="btn-secondary" onAction="#loadDoctorsIntoControls"/>
+                                </HBox>
+
+                                <Separator/>
+
+                                <GridPane hgap="16" vgap="14">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="50"/>
+                                        <ColumnConstraints percentWidth="50"/>
+                                    </columnConstraints>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                        <Label text="Doctor ID:"/>
+                                        <TextField fx:id="txtUpdDocId" editable="false" style="-fx-background-color: #F1F5F9;"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                        <Label text="Full Name:"/>
+                                        <TextField fx:id="txtUpdDocName"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                        <Label text="Specialization:"/>
+                                        <TextField fx:id="txtUpdDocSpec"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                        <Label text="Phone Number:"/>
+                                        <TextField fx:id="txtUpdDocPhone"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                        <Label text="Email Address:"/>
+                                        <TextField fx:id="txtUpdDocEmail"/>
+                                    </VBox>
+                                    <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                        <Label text="Consultation Room Number:"/>
+                                        <TextField fx:id="txtUpdDocRoom"/>
+                                    </VBox>
+
+                                    <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="3" GridPane.columnSpan="2">
+                                        <Label text="Current Availability Status:"/>
+                                        <HBox spacing="16">
+                                            <RadioButton fx:id="rbStatusAvailable" text="Available">
+                                                <toggleGroup>
+                                                    <ToggleGroup fx:id="docStatusGroup"/>
+                                                </toggleGroup>
+                                            </RadioButton>
+                                            <RadioButton fx:id="rbStatusSurgery" text="In Surgery" toggleGroup="$docStatusGroup"/>
+                                            <RadioButton fx:id="rbStatusOffDuty" text="Off Duty" toggleGroup="$docStatusGroup"/>
+                                        </HBox>
+                                    </VBox>
+                                </GridPane>
+
+                                <HBox spacing="12" alignment="CENTER_RIGHT" style="-fx-padding: 8 0 0 0;">
+                                    <Button text="Update Doctor Record" styleClass="btn-primary" onAction="#handleUpdateDoctor"/>
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- ======================================================================
+                     SCREEN 3: GENERATE BILLS (Financial Invoicing & Printing)
+                     ====================================================================== -->
+                <Tab text="Generate Bills">
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                        <VBox spacing="20">
+                            <HBox alignment="CENTER_LEFT" spacing="12">
+                                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                    <Label text="3. Generate Bills" styleClass="screen-title"/>
+                                    <Label text="Compute consultation charges, apply discretionary discounts, and generate printable receipts" styleClass="screen-subtitle"/>
+                                </VBox>
+                                <Label fx:id="toastLabel3" text="" visible="false"/>
+                            </HBox>
+
+                            <HBox spacing="20">
+                                <!-- Left Form: Billing Inputs -->
+                                <VBox spacing="16" styleClass="card" HBox.hgrow="ALWAYS">
+                                    <Label text="Bill Entry (dbo.Bill &amp; dbo.PatientDetails)" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+
+                                    <GridPane hgap="14" vgap="12">
+                                        <columnConstraints>
+                                            <ColumnConstraints percentWidth="50"/>
+                                            <ColumnConstraints percentWidth="50"/>
+                                        </columnConstraints>
+
+                                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                            <Label text="Select Patient:"/>
+                                            <ComboBox fx:id="cmbBillPatient" maxWidth="Infinity" onAction="#handleBillPatientSelected"/>
+                                        </VBox>
+
+                                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                            <Label text="Attending Doctor:"/>
+                                            <ComboBox fx:id="cmbBillDoctor" maxWidth="Infinity"/>
+                                        </VBox>
+
+                                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                                            <Label text="Consultation Fee ($):"/>
+                                            <TextField fx:id="txtBillConsFee" text="150.00"/>
+                                        </VBox>
+
+                                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                            <Label text="Laboratory / Other Expenses ($):"/>
+                                            <TextField fx:id="txtBillOtherExpenses" text="50.00"/>
+                                        </VBox>
+
+                                        <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                                            <Label text="Payment Mode:"/>
+                                            <ComboBox fx:id="cmbBillPaymentMode" maxWidth="Infinity"/>
+                                        </VBox>
+
+                                        <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="2">
+                                            <Label text="Discount Percentage (%):"/>
+                                            <TextField fx:id="txtBillDiscount" text="0.0"/>
+                                        </VBox>
+                                    </GridPane>
+
+                                    <!-- Quick Discount Buttons -->
+                                    <VBox spacing="6">
+                                        <Label text="Quick Discount Presets:"/>
+                                        <HBox spacing="8">
+                                            <Button text="0%" styleClass="preset-chip" onAction="#handleDiscount0"/>
+                                            <Button text="5%" styleClass="preset-chip" onAction="#handleDiscount5"/>
+                                            <Button text="10%" styleClass="preset-chip" onAction="#handleDiscount10"/>
+                                            <Button text="15%" styleClass="preset-chip" onAction="#handleDiscount15"/>
+                                            <Button text="20%" styleClass="preset-chip" onAction="#handleDiscount20"/>
+                                        </HBox>
+                                    </VBox>
+
+                                    <Separator/>
+
+                                    <!-- Action Button -->
+                                    <HBox spacing="12" alignment="CENTER_RIGHT">
+                                        <Button text="Process Bill &amp; Print Receipt" styleClass="btn-primary" onAction="#handleProcessBill"/>
+                                    </HBox>
+                                </VBox>
+
+                                <!-- Right Summary: Live Calculation Card -->
+                                <VBox spacing="14" styleClass="card" prefWidth="340">
+                                    <Label text="Live Calculation Summary" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Label text="Gross Subtotal:" style="-fx-text-fill: #64748B;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                                        <Label fx:id="lblSubtotal" text="$200.00" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                    </HBox>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Label text="Discount Deducted:" style="-fx-text-fill: #64748B;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                                        <Label fx:id="lblDiscountAmount" text="-$0.00" style="-fx-font-weight: bold; -fx-text-fill: #EF4444;"/>
+                                    </HBox>
+
+                                    <Separator/>
+
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Label text="Total Payable:" style="-fx-font-weight: bold; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+                                        <Label fx:id="lblTotalPayable" text="$200.00" style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #0284C7;"/>
+                                    </HBox>
+
+                                    <Separator/>
+
+                                    <Label text="Receipt Output Preview:" style="-fx-font-size: 11px; -fx-text-fill: #64748B;"/>
+                                    <TextArea fx:id="txtReceiptPreview" editable="false" prefHeight="220"
+                                              style="-fx-font-family: 'Consolas', monospace; -fx-font-size: 10px;"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- ======================================================================
+                     SCREEN 4: DISPLAY INFORMATION (Universal Directory & Search)
+                     ====================================================================== -->
+                <Tab text="Display Information">
+                    <VBox spacing="16">
+                        <HBox alignment="CENTER_LEFT" spacing="12">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label text="4. Display Information" styleClass="screen-title"/>
+                                <Label text="Query hospital records across patients, doctors, checkups, and invoices based on criteria" styleClass="screen-subtitle"/>
+                            </VBox>
+                            <Button text="Refresh Records" styleClass="btn-secondary" onAction="#handleRefreshDirectory"/>
+                        </HBox>
+
+                        <!-- Search Bar & Filters -->
+                        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="card" style="-fx-padding: 12 16;">
+                            <Label text="🔍" style="-fx-font-size: 16px;"/>
+                            <TextField fx:id="txtSearch" promptText="Type search criteria (e.g. patient name, doctor, ailment, invoice #)..." HBox.hgrow="ALWAYS"/>
+                            <ComboBox fx:id="cmbCategoryFilter" prefWidth="160" onAction="#handleCategoryFilterChanged"/>
+                        </HBox>
+
+                        <!-- Directory TableView -->
+                        <TableView fx:id="tblDirectory" VBox.vgrow="ALWAYS">
+                            <columns>
+                                <TableColumn fx:id="colCategory" text="Category" prefWidth="100"/>
+                                <TableColumn fx:id="colRecordId" text="Record ID" prefWidth="90"/>
+                                <TableColumn fx:id="colPrimaryName" text="Primary Name / Entity" prefWidth="200"/>
+                                <TableColumn fx:id="colSecondaryInfo" text="Details / Specialization" prefWidth="240"/>
+                                <TableColumn fx:id="colDetail" text="Additional Notes / Address" prefWidth="260"/>
+                                <TableColumn fx:id="colStatus" text="Status" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                    </VBox>
+                </Tab>
+
+            </TabPane>
+        </StackPane>
+    </center>
+
+</BorderPane>
