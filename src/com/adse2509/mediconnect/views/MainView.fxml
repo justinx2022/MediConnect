@@ -335,12 +335,12 @@
                                         </VBox>
 
                                         <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="1">
-                                            <Label text="Consultation Fee ($):"/>
+                                            <Label text="Consultation Fee (USD):"/>
                                             <TextField fx:id="txtBillConsFee" text="150.00"/>
                                         </VBox>
 
                                         <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                            <Label text="Laboratory / Other Expenses ($):"/>
+                                            <Label text="Laboratory / Other Expenses (USD):"/>
                                             <TextField fx:id="txtBillOtherExpenses" text="50.00"/>
                                         </VBox>
 
@@ -381,19 +381,19 @@
 
                                     <HBox alignment="CENTER_LEFT">
                                         <Label text="Gross Subtotal:" style="-fx-text-fill: #64748B;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                                        <Label fx:id="lblSubtotal" text="$200.00" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
+                                        <Label fx:id="lblSubtotal" text="200.00" style="-fx-font-weight: bold; -fx-font-size: 14px;"/>
                                     </HBox>
 
                                     <HBox alignment="CENTER_LEFT">
                                         <Label text="Discount Deducted:" style="-fx-text-fill: #64748B;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                                        <Label fx:id="lblDiscountAmount" text="-$0.00" style="-fx-font-weight: bold; -fx-text-fill: #EF4444;"/>
+                                        <Label fx:id="lblDiscountAmount" text="0.00" style="-fx-font-weight: bold; -fx-text-fill: #EF4444;"/>
                                     </HBox>
 
                                     <Separator/>
 
                                     <HBox alignment="CENTER_LEFT">
                                         <Label text="Total Payable:" style="-fx-font-weight: bold; -fx-font-size: 14px;" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
-                                        <Label fx:id="lblTotalPayable" text="$200.00" style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #0284C7;"/>
+                                        <Label fx:id="lblTotalPayable" text="200.00" style="-fx-font-weight: bold; -fx-font-size: 20px; -fx-text-fill: #0284C7;"/>
                                     </HBox>
 
                                     <Separator/>
