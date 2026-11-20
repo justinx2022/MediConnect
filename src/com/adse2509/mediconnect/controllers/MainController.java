@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.controllers;
 
 import com.adse2509.mediconnect.dao.*;
@@ -18,19 +22,18 @@ import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
 
 /**
- * Main Controller for the MediConnect JavaFX front-end.
- * Bridges FXML views with DAOs and Service layers, adhering to MVC architecture.
- *
+ * Controller for the main application window.
+ * 
  * @author Group 3
  */
 public class MainController implements Initializable
 {
-    // Services and DAOs
     private final DoctorDAO doctorDAO = new DoctorDAO();
     private final PatientDAO patientDAO = new PatientDAO();
     private final PatientDetailsDAO patientDetailsDAO = new PatientDetailsDAO();
@@ -39,124 +42,68 @@ public class MainController implements Initializable
     private final DirectoryService directoryService = new DirectoryService(doctorDAO, patientDAO, patientDetailsDAO, billDAO);
     private final InvoiceReportService reportService = new InvoiceReportService();
 
-    // Directory observable list and filtered wrapper
     private final ObservableList<DirectoryItem> masterDirectoryData = FXCollections.observableArrayList();
     private FilteredList<DirectoryItem> filteredDirectoryData;
 
-    /* ==================================================================================
-     * FXML CONTROLS INJECTION
-     * ================================================================================== */
-
     @FXML private TabPane mainTabPane;
-    @FXML private Label lblStaffName;
-    @FXML private Label lblStaffRole;
-    @FXML private Label lblDbStatus;
-    @FXML private Button btnNavAdd;
-    @FXML private Button btnNavUpdate;
-    @FXML private Button btnNavBilling;
-    @FXML private Button btnNavDirectory;
-    @FXML private Button btnExit;
+    @FXML private Label lblStaffName, lblStaffRole;
+    @FXML private Button btnNavAdd, btnNavUpdate, btnNavBilling, btnNavDirectory, btnExit;
 
-    // Screen 1: Add New Records
-    @FXML private RadioButton rbAddPatient;
-    @FXML private RadioButton rbAddDoctor;
-    @FXML private VBox boxPatientForm;
-    @FXML private VBox boxDoctorForm;
-    @FXML private TextField txtPatId;
-    @FXML private TextField txtPatName;
-    @FXML private TextField txtPatAddress;
-    @FXML private TextField txtPatPhone;
-    @FXML private TextField txtPatAge;
-    @FXML private ComboBox<String> cmbPatGender;
-    @FXML private ComboBox<String> cmbPatBlood;
-    @FXML private TextField txtPatWeight;
-    @FXML private TextField txtPatHeight;
+    // Screen 1: Add
+    @FXML private RadioButton rbAddPatient, rbAddDoctor;
+    @FXML private VBox boxPatientForm, boxDoctorForm;
+    @FXML private TextField txtPatId, txtPatName, txtPatAddress, txtPatPhone, txtPatAge, txtPatWeight, txtPatHeight, txtPatAilment, txtPatDesc;
+    @FXML private ComboBox<String> cmbPatGender, cmbPatBlood;
     @FXML private ComboBox<Doctor> cmbPatDoctor;
-    @FXML private TextField txtPatAilment;
-    @FXML private TextField txtPatDesc;
-    @FXML private Label toastLabel1;
+    @FXML private TextField txtDocId, txtDocName, txtDocSpec, txtDocPhone, txtDocEmail, txtDocRoom;
 
-    // Screen 1 Doctor fields
-    @FXML private TextField txtDocId;
-    @FXML private TextField txtDocName;
-    @FXML private TextField txtDocSpec;
-    @FXML private TextField txtDocPhone;
-    @FXML private TextField txtDocEmail;
-    @FXML private TextField txtDocRoom;
-
-    // Screen 2: Update Details
+    // Screen 2: Update & Delete
+    @FXML private RadioButton rbUpdDoctorType, rbUpdPatientType;
+    @FXML private VBox boxUpdateDoctor, boxUpdatePatient;
     @FXML private ComboBox<Doctor> cmbUpdateDoctorSelect;
-    @FXML private TextField txtUpdDocId;
-    @FXML private TextField txtUpdDocName;
-    @FXML private TextField txtUpdDocSpec;
-    @FXML private TextField txtUpdDocPhone;
-    @FXML private TextField txtUpdDocEmail;
-    @FXML private TextField txtUpdDocRoom;
-    @FXML private RadioButton rbStatusAvailable;
-    @FXML private RadioButton rbStatusSurgery;
-    @FXML private RadioButton rbStatusOffDuty;
-    @FXML private Label toastLabel2;
+    @FXML private TextField txtUpdDocId, txtUpdDocName, txtUpdDocSpec, txtUpdDocPhone, txtUpdDocEmail, txtUpdDocRoom;
+    @FXML private RadioButton rbStatusAvailable, rbStatusSurgery, rbStatusOffDuty;
+    @FXML private ComboBox<Patient> cmbUpdatePatientSelect;
+    @FXML private TextField txtUpdPatId, txtUpdPatName, txtUpdPatAddress, txtUpdPatPhone, txtUpdPatAge, txtUpdPatWeight, txtUpdPatHeight;
+    @FXML private ComboBox<String> cmbUpdPatGender, cmbUpdPatBlood;
 
-    // Screen 3: Generate Bills
+    // Screen 3: Billing
     @FXML private ComboBox<Patient> cmbBillPatient;
     @FXML private ComboBox<Doctor> cmbBillDoctor;
-    @FXML private TextField txtBillConsFee;
-    @FXML private TextField txtBillOtherExpenses;
+    @FXML private TextField txtBillConsFee, txtBillOtherExpenses, txtBillDiscount;
     @FXML private ComboBox<String> cmbBillPaymentMode;
-    @FXML private TextField txtBillDiscount;
-    @FXML private Label lblSubtotal;
-    @FXML private Label lblDiscountAmount;
-    @FXML private Label lblTotalPayable;
+    @FXML private Label lblSubtotal, lblDiscountAmount, lblTotalPayable;
     @FXML private TextArea txtReceiptPreview;
-    @FXML private Label toastLabel3;
 
-    // Screen 4: Display Information
+    // Screen 4: Directory & Queries
+    @FXML private Label lblStatDoctors, lblStatPatients, lblStatVisits, lblDateQueryResult;
+    @FXML private DatePicker dpVisitDateQuery;
     @FXML private TextField txtSearch;
     @FXML private ComboBox<String> cmbCategoryFilter;
     @FXML private TableView<DirectoryItem> tblDirectory;
-    @FXML private TableColumn<DirectoryItem, String> colCategory;
-    @FXML private TableColumn<DirectoryItem, String> colRecordId;
-    @FXML private TableColumn<DirectoryItem, String> colPrimaryName;
-    @FXML private TableColumn<DirectoryItem, String> colSecondaryInfo;
-    @FXML private TableColumn<DirectoryItem, String> colDetail;
-    @FXML private TableColumn<DirectoryItem, String> colStatus;
-
-    /* ==================================================================================
-     * INITIALIZATION
-     * ================================================================================== */
+    @FXML private TableColumn<DirectoryItem, String> colCategory, colRecordId, colPrimaryName, colSecondaryInfo, colDetail, colStatus;
 
     @Override
     public void initialize(URL location, ResourceBundle resources)
     {
-        // 1. Check database connectivity
-        boolean online = DatabaseConnection.isServerAvailable();
-        lblDbStatus.setText(online ? "● SQL Server: Online" : "● Offline Demo Mode (Memory Store)");
-        lblDbStatus.setStyle(online ? "-fx-text-fill: #10B981;" : "-fx-text-fill: #F59E0B;");
-
-        // 2. Initialize dropdown values
         cmbPatGender.setItems(FXCollections.observableArrayList("M", "F", "O"));
-        cmbPatGender.getSelectionModel().select("M");
-
+        cmbPatGender.getSelectionModel().selectFirst();
         cmbPatBlood.setItems(FXCollections.observableArrayList("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"));
-        cmbPatBlood.getSelectionModel().select("O+");
+        cmbPatBlood.getSelectionModel().selectFirst();
+
+        if (cmbUpdPatGender != null) cmbUpdPatGender.setItems(cmbPatGender.getItems());
+        if (cmbUpdPatBlood != null) cmbUpdPatBlood.setItems(cmbPatBlood.getItems());
 
         cmbBillPaymentMode.setItems(FXCollections.observableArrayList("Cash", "Card", "Cheque", "Other"));
-        cmbBillPaymentMode.getSelectionModel().select("Cash");
+        cmbBillPaymentMode.getSelectionModel().selectFirst();
 
         cmbCategoryFilter.setItems(FXCollections.observableArrayList("All Categories", "Doctor", "Patient", "Checkup", "Invoice"));
         cmbCategoryFilter.getSelectionModel().selectFirst();
 
-        // 3. Load dynamic entities into combo boxes
         loadDoctorsIntoControls();
         loadPatientsIntoControls();
-
-        // 4. Attach real-time calculation listeners to billing fields
-        setupBillingCalculationListeners();
-
-        // 5. Setup Directory TableView
+        setupBillingListeners();
         setupDirectoryTable();
-
-        // 6. Refresh directory records
         refreshDirectory();
     }
 
@@ -165,72 +112,39 @@ public class MainController implements Initializable
         if (staff != null)
         {
             lblStaffName.setText(staff.getStaffName());
-            lblStaffRole.setText("Staff ID: " + staff.getStaffId() + " (PMC)");
+            lblStaffRole.setText("Staff ID: " + staff.getStaffId());
         }
     }
 
-    /* ==================================================================================
-     * SIDEBAR NAVIGATION HANDLERS (Matching Flowchart Figure 1.2)
-     * ================================================================================== */
+    // --------------------------------------------------
+    // Navigation
+    // --------------------------------------------------
+    @FXML private void handleNavAdd() { selectTab(0, btnNavAdd); }
+    @FXML private void handleNavUpdate() { selectTab(1, btnNavUpdate); }
+    @FXML private void handleNavBilling() { selectTab(2, btnNavBilling); recalculateBill(); }
+    @FXML private void handleNavDirectory() { selectTab(3, btnNavDirectory); refreshDirectory(); }
 
-    @FXML
-    private void handleNavAdd()
+    private void selectTab(int index, Button btn)
     {
-        mainTabPane.getSelectionModel().select(0);
-        updateNavButtonActive(btnNavAdd);
-    }
-
-    @FXML
-    private void handleNavUpdate()
-    {
-        mainTabPane.getSelectionModel().select(1);
-        updateNavButtonActive(btnNavUpdate);
-    }
-
-    @FXML
-    private void handleNavBilling()
-    {
-        mainTabPane.getSelectionModel().select(2);
-        updateNavButtonActive(btnNavBilling);
-        recalculateBill();
-    }
-
-    @FXML
-    private void handleNavDirectory()
-    {
-        mainTabPane.getSelectionModel().select(3);
-        updateNavButtonActive(btnNavDirectory);
-        refreshDirectory();
+        mainTabPane.getSelectionModel().select(index);
+        Button[] navs = {btnNavAdd, btnNavUpdate, btnNavBilling, btnNavDirectory};
+        for (Button b : navs) b.getStyleClass().remove("active");
+        if (!btn.getStyleClass().contains("active")) btn.getStyleClass().add("active");
     }
 
     @FXML
     private void handleExit()
     {
-        boolean confirm = AlertHelper.showConfirmation("Exit MediConnect", "Are you sure you want to exit the application?");
-        if (confirm)
+        if (AlertHelper.showConfirmation("Exit MediConnect", "Do you want to exit?"))
         {
             Platform.exit();
             System.exit(0);
         }
     }
 
-    private void updateNavButtonActive(Button activeBtn)
-    {
-        Button[] buttons = {btnNavAdd, btnNavUpdate, btnNavBilling, btnNavDirectory};
-        for (Button btn : buttons)
-        {
-            btn.getStyleClass().remove("active");
-        }
-        if (!activeBtn.getStyleClass().contains("active"))
-        {
-            activeBtn.getStyleClass().add("active");
-        }
-    }
-
-    /* ==================================================================================
-     * SCREEN 1: ADD NEW RECORDS
-     * ================================================================================== */
-
+    // --------------------------------------------------
+    // Screen 1: Add Records
+    // --------------------------------------------------
     @FXML
     private void handleRecordTypeToggle()
     {
@@ -246,73 +160,43 @@ public class MainController implements Initializable
     {
         String id = txtPatId.getText().trim();
         String name = txtPatName.getText().trim();
-        String address = txtPatAddress.getText().trim();
-        String phone = txtPatPhone.getText().trim();
-        String ageStr = txtPatAge.getText().trim();
-        String gender = cmbPatGender.getValue();
-        String blood = cmbPatBlood.getValue();
-        String weightStr = txtPatWeight.getText().trim();
-        String heightStr = txtPatHeight.getText().trim();
-
-        if (!ValidationHelper.isNotEmpty(id) || !ValidationHelper.isNotEmpty(name) || !ValidationHelper.isNotEmpty(address))
+        if (!ValidationHelper.isNotEmpty(id) || !ValidationHelper.isNotEmpty(name))
         {
-            AlertHelper.showToast(toastLabel1, "Please fill in all mandatory patient fields.", false);
+            AlertHelper.showWarning("Required Fields", "Patient ID and Full Name are required.");
             return;
         }
 
-        int age;
-        double weight, height;
-        try
-        {
-            age = Integer.parseInt(ageStr);
-            weight = Double.parseDouble(weightStr.isEmpty() ? "70.0" : weightStr);
-            height = Double.parseDouble(heightStr.isEmpty() ? "170.0" : heightStr);
-        }
-        catch (NumberFormatException nfe)
-        {
-            AlertHelper.showToast(toastLabel1, "Age, weight, and height must be valid numbers.", false);
-            return;
-        }
-
-        Patient patient = new Patient(id, name, phone, address, gender, age, blood, weight, height, "Active Record");
+        int age = ValidationHelper.parseIntegerOrDefault(txtPatAge.getText(), 0);
+        double weight = ValidationHelper.parseDoubleOrDefault(txtPatWeight.getText(), 0.0);
+        double height = ValidationHelper.parseDoubleOrDefault(txtPatHeight.getText(), 0.0);
+        Patient pat = new Patient(id, name, txtPatAddress.getText().trim(), txtPatPhone.getText().trim(), age, cmbPatGender.getValue(), cmbPatBlood.getValue(), weight, height, "Active");
 
         try
         {
-            patientDAO.create(patient);
-
-            // If checkup visit details provided, save to PatientDetails table
-            Doctor doc = cmbPatDoctor.getValue();
+            patientDAO.create(pat);
             String ailment = txtPatAilment.getText().trim();
-            if (doc != null && !ailment.isEmpty())
+            Doctor doc = cmbPatDoctor.getValue();
+            if (!ailment.isEmpty() && doc != null)
             {
-                String pdId = "PD" + (int)(Math.random() * 900 + 100);
-                PatientDetails details = new PatientDetails(pdId, doc.getDoctorId(), id, ailment, txtPatDesc.getText().trim(), 1, 150, 0);
-                patientDetailsDAO.create(details);
+                PatientDetails pd = new PatientDetails(0, id, doc.getDoctorId(), LocalDateTime.now(), ailment, 1, txtPatDesc.getText().trim(), 150.0, 50.0);
+                patientDetailsDAO.create(pd);
             }
-
-            AlertHelper.showToast(toastLabel1, "Patient " + name + " (" + id + ") registered successfully!", true);
+            AlertHelper.showInfo("Saved", "Patient " + name + " (" + id + ") registered successfully.");
             handleClearPatientForm();
             loadPatientsIntoControls();
             refreshDirectory();
         }
         catch (SQLException ex)
         {
-            AlertHelper.showError("Database Error", "Failed to save patient: " + ex.getMessage());
+            AlertHelper.showError("Database Error", "Failed to save: " + ex.getMessage());
         }
     }
 
     @FXML
     private void handleClearPatientForm()
     {
-        txtPatId.clear();
-        txtPatName.clear();
-        txtPatAddress.clear();
-        txtPatPhone.clear();
-        txtPatAge.clear();
-        txtPatWeight.clear();
-        txtPatHeight.clear();
-        txtPatAilment.clear();
-        txtPatDesc.clear();
+        txtPatId.clear(); txtPatName.clear(); txtPatAddress.clear(); txtPatPhone.clear();
+        txtPatAge.clear(); txtPatWeight.clear(); txtPatHeight.clear(); txtPatAilment.clear(); txtPatDesc.clear();
     }
 
     @FXML
@@ -321,164 +205,207 @@ public class MainController implements Initializable
         String id = txtDocId.getText().trim();
         String name = txtDocName.getText().trim();
         String spec = txtDocSpec.getText().trim();
-        String phone = txtDocPhone.getText().trim();
-        String email = txtDocEmail.getText().trim();
-        String room = txtDocRoom.getText().trim();
-
         if (!ValidationHelper.isNotEmpty(id) || !ValidationHelper.isNotEmpty(name) || !ValidationHelper.isNotEmpty(spec))
         {
-            AlertHelper.showToast(toastLabel1, "Doctor ID, Name, and Specialization are required.", false);
+            AlertHelper.showWarning("Required Fields", "Doctor ID, Name, and Specialization are required.");
             return;
         }
 
-        Doctor doc = new Doctor(id, name, spec, phone, email, room.isEmpty() ? "Suite 101" : room, "Available");
+        String room = txtDocRoom.getText().trim();
+        Doctor doc = new Doctor(id, name, spec, txtDocPhone.getText().trim(), txtDocEmail.getText().trim(), room.isEmpty() ? "Suite 101" : room, "Available");
         try
         {
             doctorDAO.create(doc);
-            AlertHelper.showToast(toastLabel1, "Doctor " + name + " (" + id + ") registered successfully!", true);
+            AlertHelper.showInfo("Saved", "Doctor " + name + " (" + id + ") registered successfully.");
             handleClearDoctorForm();
             loadDoctorsIntoControls();
             refreshDirectory();
         }
         catch (SQLException ex)
         {
-            AlertHelper.showError("Database Error", "Failed to save doctor: " + ex.getMessage());
+            AlertHelper.showError("Database Error", "Failed to save: " + ex.getMessage());
         }
     }
 
     @FXML
     private void handleClearDoctorForm()
     {
-        txtDocId.clear();
-        txtDocName.clear();
-        txtDocSpec.clear();
-        txtDocPhone.clear();
-        txtDocEmail.clear();
-        txtDocRoom.clear();
+        txtDocId.clear(); txtDocName.clear(); txtDocSpec.clear(); txtDocPhone.clear(); txtDocEmail.clear(); txtDocRoom.clear();
     }
 
-    /* ==================================================================================
-     * SCREEN 2: UPDATE DETAILS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // Screen 2: Update & Delete Records
+    // --------------------------------------------------
+    @FXML
+    private void handleUpdateRecordTypeToggle()
+    {
+        boolean isDoc = rbUpdDoctorType.isSelected();
+        boxUpdateDoctor.setVisible(isDoc);
+        boxUpdateDoctor.setManaged(isDoc);
+        boxUpdatePatient.setVisible(!isDoc);
+        boxUpdatePatient.setManaged(!isDoc);
+    }
 
     @FXML
     public void loadDoctorsIntoControls()
     {
         try
         {
-            List<Doctor> doctors = doctorDAO.getAll();
-            cmbPatDoctor.setItems(FXCollections.observableArrayList(doctors));
-            cmbUpdateDoctorSelect.setItems(FXCollections.observableArrayList(doctors));
-            cmbBillDoctor.setItems(FXCollections.observableArrayList(doctors));
-            if (!doctors.isEmpty())
+            List<Doctor> docs = doctorDAO.getAll();
+            cmbPatDoctor.setItems(FXCollections.observableArrayList(docs));
+            cmbUpdateDoctorSelect.setItems(FXCollections.observableArrayList(docs));
+            cmbBillDoctor.setItems(FXCollections.observableArrayList(docs));
+            if (!docs.isEmpty())
             {
                 cmbPatDoctor.getSelectionModel().selectFirst();
                 cmbBillDoctor.getSelectionModel().selectFirst();
             }
         }
-        catch (SQLException ex)
-        {
-            System.err.println("Error loading doctors: " + ex.getMessage());
-        }
+        catch (SQLException ex) { ex.printStackTrace(); }
     }
 
-    private void loadPatientsIntoControls()
+    @FXML
+    public void loadPatientsIntoControls()
     {
         try
         {
-            List<Patient> patients = patientDAO.getAll();
-            cmbBillPatient.setItems(FXCollections.observableArrayList(patients));
-            if (!patients.isEmpty())
-            {
-                cmbBillPatient.getSelectionModel().selectFirst();
-            }
+            List<Patient> pats = patientDAO.getAll();
+            cmbBillPatient.setItems(FXCollections.observableArrayList(pats));
+            if (cmbUpdatePatientSelect != null) cmbUpdatePatientSelect.setItems(FXCollections.observableArrayList(pats));
+            if (!pats.isEmpty()) cmbBillPatient.getSelectionModel().selectFirst();
         }
-        catch (SQLException ex)
-        {
-            System.err.println("Error loading patients: " + ex.getMessage());
-        }
+        catch (SQLException ex) { ex.printStackTrace(); }
     }
 
     @FXML
     private void handleDoctorSelectedForUpdate()
     {
         Doctor doc = cmbUpdateDoctorSelect.getValue();
-        if (doc != null)
-        {
-            txtUpdDocId.setText(doc.getDoctorId());
-            txtUpdDocName.setText(doc.getName());
-            txtUpdDocSpec.setText(doc.getSpecialization());
-            txtUpdDocPhone.setText(doc.getPhone());
-            txtUpdDocEmail.setText(doc.getEmailId());
-            txtUpdDocRoom.setText(doc.getRoomNumber());
-
-            String status = doc.getStatus();
-            if ("In Surgery".equalsIgnoreCase(status))
-            {
-                rbStatusSurgery.setSelected(true);
-            }
-            else if ("Off Duty".equalsIgnoreCase(status))
-            {
-                rbStatusOffDuty.setSelected(true);
-            }
-            else
-            {
-                rbStatusAvailable.setSelected(true);
-            }
-        }
+        if (doc == null) return;
+        txtUpdDocId.setText(doc.getDoctorId());
+        txtUpdDocName.setText(doc.getName());
+        txtUpdDocSpec.setText(doc.getSpecialization());
+        txtUpdDocPhone.setText(doc.getPhone());
+        txtUpdDocEmail.setText(doc.getEmailId());
+        txtUpdDocRoom.setText(doc.getRoomNumber());
+        if ("In Surgery".equalsIgnoreCase(doc.getStatus())) rbStatusSurgery.setSelected(true);
+        else if ("Off Duty".equalsIgnoreCase(doc.getStatus())) rbStatusOffDuty.setSelected(true);
+        else rbStatusAvailable.setSelected(true);
     }
 
     @FXML
     private void handleUpdateDoctor()
     {
         String id = txtUpdDocId.getText().trim();
-        if (id.isEmpty())
-        {
-            AlertHelper.showToast(toastLabel2, "Please select a doctor to update.", false);
-            return;
-        }
-
-        String name = txtUpdDocName.getText().trim();
-        String spec = txtUpdDocSpec.getText().trim();
-        String phone = txtUpdDocPhone.getText().trim();
-        String email = txtUpdDocEmail.getText().trim();
-        String room = txtUpdDocRoom.getText().trim();
-
-        String status = "Available";
-        if (rbStatusSurgery.isSelected()) status = "In Surgery";
-        if (rbStatusOffDuty.isSelected()) status = "Off Duty";
-
-        Doctor doc = new Doctor(id, name, spec, phone, email, room, status);
+        if (id.isEmpty()) return;
+        String status = rbStatusSurgery.isSelected() ? "In Surgery" : (rbStatusOffDuty.isSelected() ? "Off Duty" : "Available");
+        Doctor doc = new Doctor(id, txtUpdDocName.getText().trim(), txtUpdDocSpec.getText().trim(), txtUpdDocPhone.getText().trim(), txtUpdDocEmail.getText().trim(), txtUpdDocRoom.getText().trim(), status);
         try
         {
             doctorDAO.update(doc);
-            AlertHelper.showToast(toastLabel2, "Doctor " + name + " details updated successfully!", true);
+            AlertHelper.showInfo("Updated", "Doctor details updated successfully.");
             loadDoctorsIntoControls();
             refreshDirectory();
         }
-        catch (SQLException ex)
-        {
-            AlertHelper.showError("Database Error", "Failed to update doctor: " + ex.getMessage());
-        }
-    }
-
-    /* ==================================================================================
-     * SCREEN 3: GENERATE BILLS
-     * ================================================================================== */
-
-    private void setupBillingCalculationListeners()
-    {
-        txtBillConsFee.textProperty().addListener((obs, oldV, newV) -> recalculateBill());
-        txtBillOtherExpenses.textProperty().addListener((obs, oldV, newV) -> recalculateBill());
-        txtBillDiscount.textProperty().addListener((obs, oldV, newV) -> recalculateBill());
+        catch (SQLException ex) { AlertHelper.showError("Error", ex.getMessage()); }
     }
 
     @FXML
-    private void handleBillPatientSelected()
+    private void handleDeleteDoctor()
     {
-        recalculateBill();
+        String id = txtUpdDocId.getText().trim();
+        if (id.isEmpty()) return;
+        if (AlertHelper.showConfirmation("Confirm Delete", "Delete doctor " + id + "?"))
+        {
+            try
+            {
+                doctorDAO.delete(id);
+                AlertHelper.showInfo("Deleted", "Doctor removed successfully.");
+                clearDoctorUpdateFields();
+                loadDoctorsIntoControls();
+                refreshDirectory();
+            }
+            catch (SQLException ex) { AlertHelper.showError("Error", ex.getMessage()); }
+        }
     }
 
+    private void clearDoctorUpdateFields()
+    {
+        txtUpdDocId.clear(); txtUpdDocName.clear(); txtUpdDocSpec.clear(); txtUpdDocPhone.clear(); txtUpdDocEmail.clear(); txtUpdDocRoom.clear();
+        rbStatusAvailable.setSelected(true);
+    }
+
+    @FXML
+    private void handlePatientSelectedForUpdate()
+    {
+        Patient pat = cmbUpdatePatientSelect.getValue();
+        if (pat == null) return;
+        txtUpdPatId.setText(pat.getPatientId());
+        txtUpdPatName.setText(pat.getName());
+        txtUpdPatAddress.setText(pat.getAddress());
+        txtUpdPatPhone.setText(pat.getPhone());
+        txtUpdPatAge.setText(String.valueOf(pat.getAge()));
+        if (pat.getGender() != null) cmbUpdPatGender.getSelectionModel().select(pat.getGender());
+        if (pat.getBloodGroup() != null) cmbUpdPatBlood.getSelectionModel().select(pat.getBloodGroup());
+        txtUpdPatWeight.setText(String.valueOf(pat.getWeight()));
+        txtUpdPatHeight.setText(String.valueOf(pat.getHeight()));
+    }
+
+    @FXML
+    private void handleUpdatePatient()
+    {
+        String id = txtUpdPatId.getText().trim();
+        if (id.isEmpty()) return;
+        int age = ValidationHelper.parseIntegerOrDefault(txtUpdPatAge.getText(), 0);
+        double weight = ValidationHelper.parseDoubleOrDefault(txtUpdPatWeight.getText(), 0.0);
+        double height = ValidationHelper.parseDoubleOrDefault(txtUpdPatHeight.getText(), 0.0);
+        Patient pat = new Patient(id, txtUpdPatName.getText().trim(), txtUpdPatAddress.getText().trim(), txtUpdPatPhone.getText().trim(), age, cmbUpdPatGender.getValue(), cmbUpdPatBlood.getValue(), weight, height, "Active");
+        try
+        {
+            patientDAO.update(pat);
+            AlertHelper.showInfo("Updated", "Patient details updated successfully.");
+            loadPatientsIntoControls();
+            refreshDirectory();
+        }
+        catch (SQLException ex) { AlertHelper.showError("Error", ex.getMessage()); }
+    }
+
+    @FXML
+    private void handleDeletePatient()
+    {
+        String id = txtUpdPatId.getText().trim();
+        if (id.isEmpty()) return;
+        if (AlertHelper.showConfirmation("Confirm Delete", "Delete patient " + id + "?"))
+        {
+            try
+            {
+                patientDAO.delete(id);
+                AlertHelper.showInfo("Deleted", "Patient removed successfully.");
+                clearPatientUpdateFields();
+                loadPatientsIntoControls();
+                refreshDirectory();
+            }
+            catch (SQLException ex) { AlertHelper.showError("Error", ex.getMessage()); }
+        }
+    }
+
+    private void clearPatientUpdateFields()
+    {
+        txtUpdPatId.clear(); txtUpdPatName.clear(); txtUpdPatAddress.clear(); txtUpdPatPhone.clear();
+        txtUpdPatAge.clear(); txtUpdPatWeight.clear(); txtUpdPatHeight.clear();
+    }
+
+    // --------------------------------------------------
+    // Screen 3: Billing
+    // --------------------------------------------------
+    private void setupBillingListeners()
+    {
+        txtBillConsFee.textProperty().addListener((o, ov, nv) -> recalculateBill());
+        txtBillOtherExpenses.textProperty().addListener((o, ov, nv) -> recalculateBill());
+        txtBillDiscount.textProperty().addListener((o, ov, nv) -> recalculateBill());
+    }
+
+    @FXML private void handleBillPatientSelected() { recalculateBill(); }
     @FXML private void handleDiscount0() { txtBillDiscount.setText("0.0"); }
     @FXML private void handleDiscount5() { txtBillDiscount.setText("5.0"); }
     @FXML private void handleDiscount10() { txtBillDiscount.setText("10.0"); }
@@ -487,106 +414,68 @@ public class MainController implements Initializable
 
     private void recalculateBill()
     {
-        double cons = parseDoubleSafe(txtBillConsFee.getText(), 150.0);
-        double other = parseDoubleSafe(txtBillOtherExpenses.getText(), 50.0);
-        double discPercent = parseDoubleSafe(txtBillDiscount.getText(), 0.0);
+        double cons = ValidationHelper.parseDoubleOrDefault(txtBillConsFee.getText(), 150.0);
+        double other = ValidationHelper.parseDoubleOrDefault(txtBillOtherExpenses.getText(), 50.0);
+        double disc = ValidationHelper.parseDoubleOrDefault(txtBillDiscount.getText(), 0.0);
 
         double subtotal = billingService.calculateSubtotal(cons, other);
-        double discAmount = billingService.calculateDiscountAmount(subtotal, discPercent);
-        double netPayable = billingService.calculateTotalPayable(cons, other, discPercent);
+        double discAmt = billingService.calculateDiscountAmount(subtotal, disc);
+        double total = billingService.calculateTotalPayable(cons, other, disc);
 
-        lblSubtotal.setText(String.format("$%.2f", subtotal));
-        lblDiscountAmount.setText(String.format("-$%.2f", discAmount));
-        lblTotalPayable.setText(String.format("$%.2f", netPayable));
+        lblSubtotal.setText(String.format("%.2f", subtotal));
+        lblDiscountAmount.setText(String.format("%.2f", discAmt));
+        lblTotalPayable.setText(String.format("%.2f", total));
 
-        // Generate live text preview
-        Bill preview = buildCurrentBill(netPayable, cons, other, discPercent);
-        txtReceiptPreview.setText(reportService.generateReceiptText(preview));
+        Bill bill = buildCurrentBill(total, cons, other, disc);
+        txtReceiptPreview.setText(reportService.generateReceiptText(bill));
     }
 
-    private double parseDoubleSafe(String val, double defaultVal)
-    {
-        try
-        {
-            return Double.parseDouble(val.trim());
-        }
-        catch (Exception e)
-        {
-            return defaultVal;
-        }
-    }
-
-    private Bill buildCurrentBill(double netAmount, double cons, double other, double discount)
+    private Bill buildCurrentBill(double net, double cons, double other, double disc)
     {
         Patient p = cmbBillPatient.getValue();
         Doctor d = cmbBillDoctor.getValue();
-        String patId = (p != null) ? p.getPatientId() : "P001";
-        String patName = (p != null) ? p.getName() : "Sample Patient";
-        String docName = (d != null) ? d.getName() : "Attending Physician";
-
-        Bill bill = new Bill(0, patId, LocalDateTime.now(), netAmount, cmbBillPaymentMode.getValue());
-        bill.setPatientName(patName);
-        bill.setDoctorName(docName);
-        bill.setConsFees(cons);
-        bill.setOtherExpenses(other);
-        bill.setDiscountPercent(discount);
-        return bill;
+        Bill b = new Bill(0, p != null ? p.getPatientId() : "P001", LocalDateTime.now(), net, cmbBillPaymentMode.getValue());
+        b.setPatientName(p != null ? p.getName() : "Patient");
+        b.setDoctorName(d != null ? d.getName() : "Attending Doctor");
+        b.setConsFees(cons);
+        b.setOtherExpenses(other);
+        b.setDiscountPercent(disc);
+        return b;
     }
 
     @FXML
     private void handleProcessBill()
     {
-        Patient patient = cmbBillPatient.getValue();
-        if (patient == null)
+        Patient p = cmbBillPatient.getValue();
+        if (p == null)
         {
-            AlertHelper.showToast(toastLabel3, "Please select a patient for billing.", false);
+            AlertHelper.showWarning("Required", "Please select a patient.");
             return;
         }
 
-        double cons = parseDoubleSafe(txtBillConsFee.getText(), 150.0);
-        double other = parseDoubleSafe(txtBillOtherExpenses.getText(), 50.0);
-        double discPercent = parseDoubleSafe(txtBillDiscount.getText(), 0.0);
-        double netPayable = billingService.calculateTotalPayable(cons, other, discPercent);
+        double cons = ValidationHelper.parseDoubleOrDefault(txtBillConsFee.getText(), 150.0);
+        double other = ValidationHelper.parseDoubleOrDefault(txtBillOtherExpenses.getText(), 50.0);
+        double disc = ValidationHelper.parseDoubleOrDefault(txtBillDiscount.getText(), 0.0);
+        double total = billingService.calculateTotalPayable(cons, other, disc);
 
-        Bill bill = buildCurrentBill(netPayable, cons, other, discPercent);
-
+        Bill bill = buildCurrentBill(total, cons, other, disc);
         try
         {
             billingService.processBillTransaction(bill);
             Path receiptPath = reportService.saveReceiptToFile(bill);
-
-            AlertHelper.showToast(toastLabel3, "Bill processed and receipt generated for " + bill.getPatientName() + "!", true);
-
-            boolean printConfirm = AlertHelper.showConfirmation(
-                    "Print Receipt Confirmation",
-                    "Bill successfully settled for $" + String.format("%.2f", netPayable) + ".\n\n"
-                            + "Receipt saved to:\n" + receiptPath.toAbsolutePath() + "\n\n"
-                            + "Would you like to open the receipt document now?"
-            );
-
-            if (printConfirm)
+            AlertHelper.showInfo("Processed", "Bill processed for " + bill.getPatientName() + " (Total: " + String.format("%.2f", total) + ")");
+            if (AlertHelper.showConfirmation("Receipt", "Would you like to open the receipt?"))
             {
-                try
-                {
-                    java.awt.Desktop.getDesktop().open(receiptPath.toFile());
-                }
-                catch (Exception ignored)
-                {
-                }
+                try { java.awt.Desktop.getDesktop().open(receiptPath.toFile()); } catch (Exception ignored) {}
             }
-
             refreshDirectory();
         }
-        catch (Exception ex)
-        {
-            AlertHelper.showError("Billing Transaction Error", "Failed to process bill: " + ex.getMessage());
-        }
+        catch (Exception ex) { AlertHelper.showError("Error", ex.getMessage()); }
     }
 
-    /* ==================================================================================
-     * SCREEN 4: DISPLAY INFORMATION (Directory & Real-time Search)
-     * ================================================================================== */
-
+    // --------------------------------------------------
+    // Screen 4: Directory & Queries
+    // --------------------------------------------------
     private void setupDirectoryTable()
     {
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
@@ -596,58 +485,69 @@ public class MainController implements Initializable
         colDetail.setCellValueFactory(new PropertyValueFactory<>("detail"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        filteredDirectoryData = new FilteredList<>(masterDirectoryData, p -> true);
+        filteredDirectoryData = new FilteredList<>(masterDirectoryData, item -> true);
         tblDirectory.setItems(filteredDirectoryData);
-
-        // Real-time search filter listener
-        txtSearch.textProperty().addListener((observable, oldValue, newValue) -> applyDirectoryFilter());
+        txtSearch.textProperty().addListener((o, ov, nv) -> applyFilter());
     }
 
-    @FXML
-    private void handleCategoryFilterChanged()
-    {
-        applyDirectoryFilter();
-    }
+    @FXML private void handleCategoryFilterChanged() { applyFilter(); }
 
-    private void applyDirectoryFilter()
+    private void applyFilter()
     {
-        String query = txtSearch.getText();
-        String selectedCategory = cmbCategoryFilter.getValue();
+        String q = txtSearch.getText() != null ? txtSearch.getText().toLowerCase().trim() : "";
+        String cat = cmbCategoryFilter.getValue();
 
         filteredDirectoryData.setPredicate(item -> {
-            boolean matchesCategory = (selectedCategory == null
-                    || "All Categories".equals(selectedCategory)
-                    || item.getCategory().equalsIgnoreCase(selectedCategory));
-
-            if (!matchesCategory) return false;
-
-            if (query == null || query.trim().isEmpty()) return true;
-
-            String lower = query.toLowerCase().trim();
-            return item.getPrimaryName().toLowerCase().contains(lower)
-                    || item.getRecordId().toLowerCase().contains(lower)
-                    || item.getSecondaryInfo().toLowerCase().contains(lower)
-                    || item.getDetail().toLowerCase().contains(lower);
+            boolean matchCat = cat == null || "All Categories".equals(cat) || item.getCategory().equalsIgnoreCase(cat);
+            if (!matchCat) return false;
+            if (q.isEmpty()) return true;
+            return item.getPrimaryName().toLowerCase().contains(q)
+                    || item.getRecordId().toLowerCase().contains(q)
+                    || item.getSecondaryInfo().toLowerCase().contains(q)
+                    || item.getDetail().toLowerCase().contains(q);
         });
     }
 
-    @FXML
-    public void handleRefreshDirectory()
-    {
-        refreshDirectory();
-    }
+    @FXML public void handleRefreshDirectory() { refreshDirectory(); }
 
     private void refreshDirectory()
     {
         try
         {
-            List<DirectoryItem> records = directoryService.getAllDirectoryRecords();
-            masterDirectoryData.setAll(records);
-            applyDirectoryFilter();
+            masterDirectoryData.setAll(directoryService.getAllDirectoryRecords());
+            applyFilter();
+            if (lblStatDoctors != null) lblStatDoctors.setText("Doctors: " + directoryService.getDoctorCount());
+            if (lblStatPatients != null) lblStatPatients.setText("Patients: " + directoryService.getPatientCount());
+            if (lblStatVisits != null) lblStatVisits.setText("Visits: " + directoryService.getCheckupCount());
         }
-        catch (SQLException ex)
+        catch (SQLException ex) { ex.printStackTrace(); }
+    }
+
+    @FXML
+    private void handleQueryPatientsByDate()
+    {
+        if (dpVisitDateQuery == null || dpVisitDateQuery.getValue() == null)
         {
-            System.err.println("Error fetching directory records: " + ex.getMessage());
+            AlertHelper.showWarning("Date Required", "Please select a date to query visits.");
+            return;
         }
+
+        LocalDate d = dpVisitDateQuery.getValue();
+        try
+        {
+            List<DirectoryItem> visits = directoryService.getVisitsByDate(d);
+            if (lblDateQueryResult != null) lblDateQueryResult.setText("Found: " + visits.size() + " on " + d);
+            masterDirectoryData.setAll(visits);
+            applyFilter();
+        }
+        catch (SQLException ex) { AlertHelper.showError("Error", ex.getMessage()); }
+    }
+
+    @FXML
+    private void handleClearDateQuery()
+    {
+        if (dpVisitDateQuery != null) dpVisitDateQuery.setValue(null);
+        if (lblDateQueryResult != null) lblDateQueryResult.setText("");
+        refreshDirectory();
     }
 }

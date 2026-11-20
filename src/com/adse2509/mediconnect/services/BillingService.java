@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.services;
 
 import com.adse2509.mediconnect.dao.BillDAO;
@@ -12,9 +16,8 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 
 /**
- * Service class handling patient billing computations and transaction boundaries.
- * Demonstrates ACID transaction processing from ADSE 2509 Session 07 (Advanced JDBC).
- *
+ * Service to handle billing calculations and invoice transactions.
+ * 
  * @author Group 3
  */
 public class BillingService
@@ -34,9 +37,9 @@ public class BillingService
         this.patientDAO = patientDAO;
     }
 
-    /* ==================================================================================
-     * FINANCIAL CALCULATIONS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // Billing Calculations
+    // --------------------------------------------------
 
     public double calculateSubtotal(double consFees, double otherExpenses)
     {
@@ -56,9 +59,9 @@ public class BillingService
         return Math.max(0.0, subtotal - discount);
     }
 
-    /* ==================================================================================
-     * TRANSACTION PROCESSING (ACID Boundaries)
-     * ================================================================================== */
+    // --------------------------------------------------
+    // Transaction Processing
+    // --------------------------------------------------
 
     public boolean processBillTransaction(Bill bill) throws SQLException
     {
@@ -67,52 +70,41 @@ public class BillingService
             throw new IllegalArgumentException("Invalid bill: Patient ID is required.");
         }
 
-        // Set billing timestamp if missing
         if (bill.getBillDate() == null)
         {
             bill.setBillDate(LocalDateTime.now());
         }
 
-        // Check if database is online for explicit JDBC transaction
         if (DatabaseConnection.isServerAvailable())
         {
             try (Connection conn = DatabaseConnection.getConnection())
             {
-                // 1. Begin atomic transaction
                 conn.setAutoCommit(false);
-
                 try
                 {
-                    // Step A: Insert bill record
-                    String billSql = "INSERT INTO dbo.Bill (PatientID, BillDate, BillAmount, ModeOfPayment, PaymentStatus) VALUES (?, ?, ?, ?, ?)";
+                    String billSql = "INSERT INTO dbo.Bill (PatientID, Date, TotalAmount, ModeOfPayment) VALUES (?, ?, ?, ?)";
                     try (PreparedStatement billStmt = conn.prepareStatement(billSql))
                     {
                         billStmt.setString(1, bill.getPatientId());
                         billStmt.setTimestamp(2, java.sql.Timestamp.valueOf(bill.getBillDate()));
                         billStmt.setDouble(3, bill.getBillAmount());
                         billStmt.setString(4, bill.getModeOfPayment());
-                        billStmt.setString(5, bill.getPaymentStatus());
                         billStmt.executeUpdate();
                     }
 
-                    // Step B: Update patient status to settled
-                    String patientSql = "UPDATE dbo.Patient SET Status = 'Settled / Discharged' WHERE PatientID = ?";
+                    String patientSql = "UPDATE dbo.Patient SET Status = 'Settled' WHERE PatientID = ?";
                     try (PreparedStatement patStmt = conn.prepareStatement(patientSql))
                     {
                         patStmt.setString(1, bill.getPatientId());
                         patStmt.executeUpdate();
                     }
 
-                    // 2. Commit transaction if all steps succeed
                     conn.commit();
-                    System.out.println("[BillingService] Transaction committed successfully for Patient: " + bill.getPatientId());
                     return true;
                 }
                 catch (SQLException ex)
                 {
-                    // 3. Rollback changes on any database error
                     conn.rollback();
-                    System.err.println("[BillingService] Transaction rolled back due to error: " + ex.getMessage());
                     throw ex;
                 }
                 finally
@@ -123,12 +115,11 @@ public class BillingService
         }
         else
         {
-            // Offline fallback execution
             billDAO.create(bill);
             Patient patient = patientDAO.getById(bill.getPatientId());
             if (patient != null)
             {
-                patient.setStatus("Settled / Discharged");
+                patient.setStatus("Settled");
                 patientDAO.update(patient);
             }
             return true;

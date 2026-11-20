@@ -1,14 +1,17 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
+ */
 package com.adse2509.mediconnect.dao;
 
 import java.sql.SQLException;
 import java.util.List;
 
 /**
- * Generic Data Access Object interface defining the standard CRUD contract.
- * Demonstrates the use of Java Generics as specified in the ADSE 2509 syllabus.
+ * Generic DAO interface defining standard CRUD operations.
  *
- * @param <T>  The domain entity type
- * @param <ID> The primary key identifier type
+ * @param <T>  Entity type
+ * @param <ID> Primary key type
  * @author Group 3
  */
 public interface GenericDAO<T, ID>

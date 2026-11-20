@@ -1,11 +1,14 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.models;
 
 import java.io.Serializable;
 
 /**
- * Unified Data Transfer Object (DTO) for populating the Display Information screen
- * and TableView matching Process 1.4 of the Aptech Project Guide.
- *
+ * Model representing an aggregated record in the universal directory table.
+ * 
  * @author Group 3
  */
 public class DirectoryItem implements Serializable
@@ -18,6 +21,7 @@ public class DirectoryItem implements Serializable
     private String secondaryInfo;
     private String detail;
     private String status;
+    private String recordDate;
 
     public DirectoryItem()
     {
@@ -25,15 +29,20 @@ public class DirectoryItem implements Serializable
 
     public DirectoryItem(String category, String recordId, String primaryName, String secondaryInfo, String detail, String status)
     {
+        this(category, recordId, primaryName, secondaryInfo, detail, status, "");
+    }
+
+    public DirectoryItem(String category, String recordId, String primaryName, String secondaryInfo, String detail, String status, String recordDate)
+    {
         this.category = category;
         this.recordId = recordId;
         this.primaryName = primaryName;
         this.secondaryInfo = secondaryInfo;
         this.detail = detail;
         this.status = status;
+        this.recordDate = (recordDate != null) ? recordDate : "";
     }
 
-    // Getters and Setters
     public String getCategory()
     {
         return category;
@@ -94,9 +103,13 @@ public class DirectoryItem implements Serializable
         this.status = status;
     }
 
-    @Override
-    public String toString()
+    public String getRecordDate()
     {
-        return "[" + category + "] " + primaryName + " (" + recordId + ")";
+        return recordDate;
+    }
+
+    public void setRecordDate(String recordDate)
+    {
+        this.recordDate = recordDate;
     }
 }

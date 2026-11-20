@@ -1,8 +1,12 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.utils;
 
 /**
- * Utility helper validating inputs for Patient, Doctor, and Billing entries.
- *
+ * Utility helper for field validation and data conversion.
+ * 
  * @author Group 3
  */
 public class ValidationHelper
@@ -11,28 +15,40 @@ public class ValidationHelper
     {
     }
 
-    public static boolean isNotEmpty(String text)
+    public static boolean isNotEmpty(String value)
     {
-        return text != null && !text.trim().isEmpty();
+        return value != null && !value.trim().isEmpty();
     }
 
-    public static boolean isValidAge(int age)
+    public static int parseIntegerOrDefault(String str, int defaultVal)
     {
-        return age >= 0 && age <= 125;
+        if (str == null || str.trim().isEmpty())
+        {
+            return defaultVal;
+        }
+        try
+        {
+            return Integer.parseInt(str.trim());
+        }
+        catch (NumberFormatException e)
+        {
+            return defaultVal;
+        }
     }
 
-    public static boolean isValidMetric(double val)
+    public static double parseDoubleOrDefault(String str, double defaultVal)
     {
-        return val > 0.0 && val <= 500.0;
-    }
-
-    public static boolean isValidPhone(String phone)
-    {
-        return isNotEmpty(phone) && phone.replaceAll("[^0-9+]", "").length() >= 7;
-    }
-
-    public static boolean isValidDiscount(double discount)
-    {
-        return discount >= 0.0 && discount <= 100.0;
+        if (str == null || str.trim().isEmpty())
+        {
+            return defaultVal;
+        }
+        try
+        {
+            return Double.parseDouble(str.trim());
+        }
+        catch (NumberFormatException e)
+        {
+            return defaultVal;
+        }
     }
 }

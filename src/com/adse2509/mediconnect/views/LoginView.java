@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.views;
 
 import com.adse2509.mediconnect.dao.StaffDAO;
@@ -13,10 +17,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 /**
- * Staff Authentication Dialog.
- * Direct implementation of the Aptech Reference Code (Project Guide Pages 45-46).
- * Authenticates staff credentials against {@code dbo.Staff}.
- *
+ * Staff authentication dialog.
+ * 
  * @author Group 3
  */
 public class LoginView
@@ -30,61 +32,52 @@ public class LoginView
         Stage dialog = new Stage();
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initOwner(parentStage);
-        dialog.setTitle("MediConnect - Staff Login (PMC)");
+        dialog.setTitle("MediConnect - Staff Login");
         dialog.setResizable(false);
 
-        // Header Title
         Label headerTitle = new Label("Philadelphia Medical Center");
         headerTitle.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #0F172A;");
 
-        Label subTitle = new Label("MediConnect Staff Authentication");
+        Label subTitle = new Label("Staff Login Authentication");
         subTitle.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
 
         VBox headerBox = new VBox(4, headerTitle, subTitle);
         headerBox.setAlignment(Pos.CENTER);
         headerBox.setPadding(new Insets(10, 0, 15, 0));
 
-        // Form Grid
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(12);
         grid.setAlignment(Pos.CENTER);
 
-        Label idLabel = new Label("Staff ID:");
-        idLabel.setStyle("-fx-font-weight: bold;");
         TextField idField = new TextField("ST01");
-        idField.setPromptText("e.g. ST01");
-
-        Label passLabel = new Label("Password:");
-        passLabel.setStyle("-fx-font-weight: bold;");
+        idField.setPromptText("Staff ID");
         PasswordField passField = new PasswordField();
         passField.setText("admin123");
-        passField.setPromptText("Enter password");
+        passField.setPromptText("Password");
 
-        grid.add(idLabel, 0, 0);
+        grid.add(new Label("Staff ID:"), 0, 0);
         grid.add(idField, 1, 0);
-        grid.add(passLabel, 0, 1);
+        grid.add(new Label("Password:"), 0, 1);
         grid.add(passField, 1, 1);
 
         Label errorLabel = new Label();
         errorLabel.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 11px;");
         errorLabel.setVisible(false);
 
-        // Action Buttons
-        Button loginBtn = new Button("Login to MediConnect");
-        loginBtn.setStyle("-fx-background-color: #0284C7; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 6;");
+        Button loginBtn = new Button("Login");
+        loginBtn.setStyle("-fx-background-color: #0284C7; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 7 16;");
 
         Button exitBtn = new Button("Exit");
-        exitBtn.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #334155; -fx-padding: 8 16; -fx-background-radius: 6;");
+        exitBtn.setStyle("-fx-padding: 7 16;");
 
         HBox btnBox = new HBox(10, exitBtn, loginBtn);
         btnBox.setAlignment(Pos.CENTER_RIGHT);
 
-        loginBtn.setOnAction(e -> {
-            String staffId = idField.getText().trim();
-            String password = passField.getText().trim();
-
-            Staff staff = staffDAO.authenticate(staffId, password);
+        Runnable doLogin = () -> {
+            String sid = idField.getText().trim();
+            String pwd = passField.getText().trim();
+            Staff staff = staffDAO.authenticate(sid, pwd);
             if (staff != null)
             {
                 authenticated = true;
@@ -93,11 +86,14 @@ public class LoginView
             }
             else
             {
-                errorLabel.setText("Invalid Staff ID or Password. Try ST01 / admin123");
+                errorLabel.setText("Invalid credentials. Use ST01 / admin123");
                 errorLabel.setVisible(true);
             }
-        });
+        };
 
+        loginBtn.setOnAction(e -> doLogin.run());
+        passField.setOnAction(e -> doLogin.run());
+        idField.setOnAction(e -> doLogin.run());
         exitBtn.setOnAction(e -> {
             authenticated = false;
             dialog.close();
@@ -105,10 +101,7 @@ public class LoginView
 
         VBox root = new VBox(12, headerBox, grid, errorLabel, btnBox);
         root.setPadding(new Insets(20));
-        root.setStyle("-fx-background-color: #FFFFFF;");
-
-        Scene scene = new Scene(root, 360, 260);
-        dialog.setScene(scene);
+        dialog.setScene(new Scene(root, 360, 240));
         dialog.showAndWait();
 
         return authenticated;

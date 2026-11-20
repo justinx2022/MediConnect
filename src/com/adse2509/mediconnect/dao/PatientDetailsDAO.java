@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.dao;
 
 import com.adse2509.mediconnect.models.PatientDetails;
@@ -6,64 +10,70 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Data Access Object performing CRUD operations against the {@code dbo.PatientDetails} table.
- * Records clinical checkup visits, ailments, consultation fees, and other expenses.
- *
+ * Data Access Object for PatientDetails (checkups and consultations).
+ * 
  * @author Group 3
  */
-public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
+public class PatientDetailsDAO implements GenericDAO<PatientDetails, Integer>
 {
-    private static final Map<String, PatientDetails> DETAILS_STORE = new ConcurrentHashMap<>();
+    private static final Map<Integer, PatientDetails> DETAILS_STORE = new ConcurrentHashMap<>();
 
     static
     {
-        // Seed patient details matching PMC Case Study
-        DETAILS_STORE.put("PD01", new PatientDetails("PD01", "D001", "P001", "Hypertension", "Regular cardiovascular checkup and ECG", 1, 150, 50));
-        DETAILS_STORE.put("PD02", new PatientDetails("PD02", "D002", "P002", "Chronic Migraine", "Neurological assessment and brain scan review", 2, 200, 120));
-        DETAILS_STORE.put("PD03", new PatientDetails("PD03", "D003", "P003", "Pediatric Asthma", "Pulmonary function consultation and inhaler", 1, 120, 30));
+        DETAILS_STORE.put(1, new PatientDetails(1, "P001", "D001", LocalDateTime.now().minusDays(3), "Hypertension Monitoring", 1, "BP 140/90, prescribed ACE inhibitors", 150.0, 30.0));
+        DETAILS_STORE.put(2, new PatientDetails(2, "P002", "D002", LocalDateTime.now().minusDays(2), "Chronic Migraine", 1, "MRI scheduled, symptom log requested", 200.0, 120.0));
+        DETAILS_STORE.put(3, new PatientDetails(3, "P003", "D003", LocalDateTime.now().minusDays(1), "Routine Pediatric Wellness", 2, "Vaccinations updated, healthy milestones", 120.0, 15.0));
+        DETAILS_STORE.put(4, new PatientDetails(4, "P004", "D004", LocalDateTime.now(), "Knee Arthralgia", 1, "X-ray completed, physical therapy initiated", 175.0, 60.0));
     }
 
     private PatientDetails mapRow(ResultSet rs) throws SQLException
     {
+        Timestamp ts = rs.getTimestamp("Date");
+        LocalDateTime ldt = (ts != null) ? ts.toLocalDateTime() : LocalDateTime.now();
         return new PatientDetails(
-                rs.getString("PatientDetailsID"),
-                rs.getString("DoctorID"),
+                rs.getInt("PatientDetailsID"),
                 rs.getString("PatientID"),
+                rs.getString("DoctorID"),
+                ldt,
                 rs.getString("Ailment"),
-                rs.getString("Description"),
                 rs.getInt("CheckupVisitNumber"),
-                rs.getInt("ConsFees"),
-                rs.getInt("OtherExpenses")
+                rs.getString("Description"),
+                rs.getDouble("ConsFees"),
+                rs.getDouble("OtherExpenses")
         );
     }
 
-    /* ==================================================================================
-     * CRUD OPERATIONS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // CRUD Operations
+    // --------------------------------------------------
 
     @Override
     public boolean create(PatientDetails details) throws SQLException
     {
-        DETAILS_STORE.put(details.getPatientDetailsId(), details);
+        int key = (details.getPatientDetailsId() <= 0) ? (DETAILS_STORE.size() + 1) : details.getPatientDetailsId();
+        details.setPatientDetailsId(key);
+        DETAILS_STORE.put(key, details);
 
-        String sql = "INSERT INTO dbo.PatientDetails (PatientDetailsID, DoctorID, PatientID, Ailment, Description, CheckupVisitNumber, ConsFees, OtherExpenses) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO dbo.PatientDetails (PatientID, DoctorID, Date, Ailment, CheckupVisitNumber, Description, ConsFees, OtherExpenses) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setString(1, details.getPatientDetailsId());
+            stmt.setString(1, details.getPatientId());
             stmt.setString(2, details.getDoctorId());
-            stmt.setString(3, details.getPatientId());
+            stmt.setTimestamp(3, Timestamp.valueOf(details.getVisitDate()));
             stmt.setString(4, details.getAilment());
-            stmt.setString(5, details.getDescription());
-            stmt.setInt(6, details.getCheckupVisitNumber());
-            stmt.setInt(7, details.getConsFees());
-            stmt.setInt(8, details.getOtherExpenses());
+            stmt.setInt(5, details.getCheckupVisitNumber());
+            stmt.setString(6, details.getDescription());
+            stmt.setDouble(7, details.getConsFees());
+            stmt.setDouble(8, details.getOtherExpenses());
             return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)
@@ -73,13 +83,13 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
     }
 
     @Override
-    public PatientDetails getById(String id) throws SQLException
+    public PatientDetails getById(Integer id) throws SQLException
     {
-        String sql = "SELECT PatientDetailsID, DoctorID, PatientID, Ailment, Description, CheckupVisitNumber, ConsFees, OtherExpenses FROM dbo.PatientDetails WHERE PatientDetailsID = ?";
+        String sql = "SELECT PatientDetailsID, PatientID, DoctorID, Date, Ailment, CheckupVisitNumber, Description, ConsFees, OtherExpenses FROM dbo.PatientDetails WHERE PatientDetailsID = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setString(1, id);
+            stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery())
             {
                 if (rs.next())
@@ -90,7 +100,7 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
         }
         catch (SQLException e)
         {
-            // Memory fallback
+            // Fallback to local store
         }
         return DETAILS_STORE.get(id);
     }
@@ -98,7 +108,7 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
     @Override
     public List<PatientDetails> getAll() throws SQLException
     {
-        String sql = "SELECT PatientDetailsID, DoctorID, PatientID, Ailment, Description, CheckupVisitNumber, ConsFees, OtherExpenses FROM dbo.PatientDetails ORDER BY PatientDetailsID";
+        String sql = "SELECT PatientDetailsID, PatientID, DoctorID, Date, Ailment, CheckupVisitNumber, Description, ConsFees, OtherExpenses FROM dbo.PatientDetails ORDER BY Date DESC";
         List<PatientDetails> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -121,18 +131,19 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
     {
         DETAILS_STORE.put(details.getPatientDetailsId(), details);
 
-        String sql = "UPDATE dbo.PatientDetails SET DoctorID = ?, PatientID = ?, Ailment = ?, Description = ?, CheckupVisitNumber = ?, ConsFees = ?, OtherExpenses = ? WHERE PatientDetailsID = ?";
+        String sql = "UPDATE dbo.PatientDetails SET PatientID = ?, DoctorID = ?, Date = ?, Ailment = ?, CheckupVisitNumber = ?, Description = ?, ConsFees = ?, OtherExpenses = ? WHERE PatientDetailsID = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setString(1, details.getDoctorId());
-            stmt.setString(2, details.getPatientId());
-            stmt.setString(3, details.getAilment());
-            stmt.setString(4, details.getDescription());
+            stmt.setString(1, details.getPatientId());
+            stmt.setString(2, details.getDoctorId());
+            stmt.setTimestamp(3, Timestamp.valueOf(details.getVisitDate()));
+            stmt.setString(4, details.getAilment());
             stmt.setInt(5, details.getCheckupVisitNumber());
-            stmt.setInt(6, details.getConsFees());
-            stmt.setInt(7, details.getOtherExpenses());
-            stmt.setString(8, details.getPatientDetailsId());
+            stmt.setString(6, details.getDescription());
+            stmt.setDouble(7, details.getConsFees());
+            stmt.setDouble(8, details.getOtherExpenses());
+            stmt.setInt(9, details.getPatientDetailsId());
             return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)
@@ -142,7 +153,7 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
     }
 
     @Override
-    public boolean delete(String id) throws SQLException
+    public boolean delete(Integer id) throws SQLException
     {
         DETAILS_STORE.remove(id);
 
@@ -150,7 +161,7 @@ public class PatientDetailsDAO implements GenericDAO<PatientDetails, String>
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setString(1, id);
+            stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)

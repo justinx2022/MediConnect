@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.dao;
 
 import com.adse2509.mediconnect.models.Doctor;
@@ -12,9 +16,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Data Access Object performing CRUD operations against the {@code dbo.Doctor} table.
- * Implements the {@link GenericDAO} contract from the ADSE 2509 syllabus.
- *
+ * Data Access Object for Doctor records in the database.
+ * 
  * @author Group 3
  */
 public class DoctorDAO implements GenericDAO<Doctor, String>
@@ -23,7 +26,6 @@ public class DoctorDAO implements GenericDAO<Doctor, String>
 
     static
     {
-        // Seed doctors matching PMC Case Study
         DOCTOR_STORE.put("D001", new Doctor("D001", "Dr. Sarah Jenkins", "Cardiology", "+254700111222", "sarah.j@pmc.org", "Suite 404", "Available"));
         DOCTOR_STORE.put("D002", new Doctor("D002", "Dr. Marcus Vance", "Neurology", "+254700333444", "marcus.v@pmc.org", "Suite 208", "In Surgery"));
         DOCTOR_STORE.put("D003", new Doctor("D003", "Dr. Elena Rostova", "Pediatrics", "+254700555666", "elena.r@pmc.org", "Suite 102", "Available"));
@@ -43,9 +45,9 @@ public class DoctorDAO implements GenericDAO<Doctor, String>
         );
     }
 
-    /* ==================================================================================
-     * CRUD OPERATIONS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // CRUD Operations
+    // --------------------------------------------------
 
     @Override
     public boolean create(Doctor doctor) throws SQLException
@@ -67,7 +69,6 @@ public class DoctorDAO implements GenericDAO<Doctor, String>
         }
         catch (SQLException e)
         {
-            // Offline fallback confirmed
             return true;
         }
     }
@@ -90,7 +91,7 @@ public class DoctorDAO implements GenericDAO<Doctor, String>
         }
         catch (SQLException e)
         {
-            // Return from memory store
+            // Fallback to local store
         }
         return DOCTOR_STORE.get(doctorId);
     }

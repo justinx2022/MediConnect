@@ -1,19 +1,20 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.models;
 
 import java.io.Serializable;
 
 /**
- * Abstract base class representing a person within the Philadelphia Medical Center (PMC).
- * Demonstrates the Object-Oriented Programming (OOP) concept of Inheritance as taught
- * in the ADSE 2509 syllabus.
- *
+ * Base class for persons in the hospital system.
+ * 
  * @author Group 3
  */
 public abstract class Person implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    // Protected fields shared by all human entities in the PMC hospital system
     protected String id;
     protected String name;
     protected String phone;
@@ -29,7 +30,6 @@ public abstract class Person implements Serializable
         this.phone = phone;
     }
 
-    // Getters and Setters
     public String getId()
     {
         return id;
@@ -63,6 +63,6 @@ public abstract class Person implements Serializable
     @Override
     public String toString()
     {
-        return "Person{" + "id='" + id + '\'' + ", name='" + name + '\'' + ", phone='" + phone + '\'' + '}';
+        return name + " (" + id + ")";
     }
 }

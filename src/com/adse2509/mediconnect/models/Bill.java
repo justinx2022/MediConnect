@@ -1,12 +1,15 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.models;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
- * Model class representing a financial bill generated for a patient at PMC.
- * Mapped to the {@code dbo.Bill} table in Microsoft SQL Server.
- *
+ * Model representing a bill or invoice in the hospital system.
+ * 
  * @author Group 3
  */
 public class Bill implements Serializable
@@ -18,19 +21,18 @@ public class Bill implements Serializable
     private LocalDateTime billDate;
     private double billAmount;
     private String modeOfPayment;
-    private String paymentStatus;
 
-    // Transient attributes for UI presentation and reporting
+    // Transient display fields
     private String patientName;
     private String doctorName;
     private double consFees;
     private double otherExpenses;
     private double discountPercent;
+    private String paymentStatus;
 
     public Bill()
     {
         this.billDate = LocalDateTime.now();
-        this.modeOfPayment = "Cash";
         this.paymentStatus = "Paid";
     }
 
@@ -38,13 +40,12 @@ public class Bill implements Serializable
     {
         this.billId = billId;
         this.patientId = patientId;
-        this.billDate = billDate;
+        this.billDate = (billDate != null) ? billDate : LocalDateTime.now();
         this.billAmount = billAmount;
-        this.modeOfPayment = modeOfPayment;
+        this.modeOfPayment = (modeOfPayment != null) ? modeOfPayment : "Cash";
         this.paymentStatus = "Paid";
     }
 
-    // Getters and Setters
     public int getBillId()
     {
         return billId;
@@ -95,19 +96,9 @@ public class Bill implements Serializable
         this.modeOfPayment = modeOfPayment;
     }
 
-    public String getPaymentStatus()
-    {
-        return paymentStatus;
-    }
-
-    public void setPaymentStatus(String paymentStatus)
-    {
-        this.paymentStatus = paymentStatus;
-    }
-
     public String getPatientName()
     {
-        return patientName != null ? patientName : patientId;
+        return patientName;
     }
 
     public void setPatientName(String patientName)
@@ -117,7 +108,7 @@ public class Bill implements Serializable
 
     public String getDoctorName()
     {
-        return doctorName != null ? doctorName : "Attending Physician";
+        return doctorName;
     }
 
     public void setDoctorName(String doctorName)
@@ -155,9 +146,13 @@ public class Bill implements Serializable
         this.discountPercent = discountPercent;
     }
 
-    @Override
-    public String toString()
+    public String getPaymentStatus()
     {
-        return "Bill{" + "billId=" + billId + ", patientId='" + patientId + '\'' + ", amount=" + billAmount + '}';
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(String paymentStatus)
+    {
+        this.paymentStatus = paymentStatus;
     }
 }

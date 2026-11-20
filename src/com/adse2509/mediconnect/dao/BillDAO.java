@@ -1,84 +1,72 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.dao;
 
 import com.adse2509.mediconnect.models.Bill;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Data Access Object performing CRUD operations against the {@code dbo.Bill} table.
- * Implements Process 1.3 (Bill Generation Process) from the Aptech Project Guide.
- *
+ * Data Access Object for Bill transactions and invoicing.
+ * 
  * @author Group 3
  */
 public class BillDAO implements GenericDAO<Bill, Integer>
 {
     private static final Map<Integer, Bill> BILL_STORE = new ConcurrentHashMap<>();
-    private static final AtomicInteger ID_GENERATOR = new AtomicInteger(1004);
 
     static
     {
-        // Seed bills matching PMC Case Study
-        BILL_STORE.put(1001, new Bill(1001, "P001", LocalDateTime.now().minusDays(2), 200.00, "Cash"));
-        BILL_STORE.put(1002, new Bill(1002, "P002", LocalDateTime.now().minusDays(1), 320.00, "Card"));
-        BILL_STORE.put(1003, new Bill(1003, "P003", LocalDateTime.now(), 150.00, "Cash"));
+        BILL_STORE.put(1001, new Bill(1001, "P001", LocalDateTime.now().minusDays(3), 180.00, "Cash"));
+        BILL_STORE.put(1002, new Bill(1002, "P002", LocalDateTime.now().minusDays(2), 320.00, "Card"));
+        BILL_STORE.put(1003, new Bill(1003, "P003", LocalDateTime.now().minusDays(1), 135.00, "Cash"));
+        BILL_STORE.put(1004, new Bill(1004, "P004", LocalDateTime.now(), 235.00, "Cheque"));
     }
 
     private Bill mapRow(ResultSet rs) throws SQLException
     {
-        Timestamp ts = rs.getTimestamp("BillDate");
-        LocalDateTime date = (ts != null) ? ts.toLocalDateTime() : LocalDateTime.now();
-        Bill bill = new Bill(
-                rs.getInt("BillID"),
+        Timestamp ts = rs.getTimestamp("Date");
+        LocalDateTime ldt = (ts != null) ? ts.toLocalDateTime() : LocalDateTime.now();
+        return new Bill(
+                rs.getInt("BillNo"),
                 rs.getString("PatientID"),
-                date,
-                rs.getDouble("BillAmount"),
+                ldt,
+                rs.getDouble("TotalAmount"),
                 rs.getString("ModeOfPayment")
         );
-        bill.setPaymentStatus(rs.getString("PaymentStatus"));
-        return bill;
     }
 
-    /* ==================================================================================
-     * CRUD OPERATIONS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // CRUD Operations
+    // --------------------------------------------------
 
     @Override
     public boolean create(Bill bill) throws SQLException
     {
-        if (bill.getBillId() <= 0)
-        {
-            bill.setBillId(ID_GENERATOR.getAndIncrement());
-        }
-        BILL_STORE.put(bill.getBillId(), bill);
+        int key = (bill.getBillId() <= 0) ? (1000 + BILL_STORE.size() + 1) : bill.getBillId();
+        bill.setBillId(key);
+        BILL_STORE.put(key, bill);
 
-        String sql = "INSERT INTO dbo.Bill (PatientID, BillDate, BillAmount, ModeOfPayment, PaymentStatus) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO dbo.Bill (PatientID, Date, TotalAmount, ModeOfPayment) VALUES (?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS))
+             PreparedStatement stmt = conn.prepareStatement(sql))
         {
             stmt.setString(1, bill.getPatientId());
             stmt.setTimestamp(2, Timestamp.valueOf(bill.getBillDate()));
             stmt.setDouble(3, bill.getBillAmount());
             stmt.setString(4, bill.getModeOfPayment());
-            stmt.setString(5, bill.getPaymentStatus());
-
-            int affected = stmt.executeUpdate();
-            if (affected > 0)
-            {
-                try (ResultSet keys = stmt.getGeneratedKeys())
-                {
-                    if (keys.next())
-                    {
-                        bill.setBillId(keys.getInt(1));
-                    }
-                }
-            }
-            return affected > 0;
+            return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)
         {
@@ -87,13 +75,13 @@ public class BillDAO implements GenericDAO<Bill, Integer>
     }
 
     @Override
-    public Bill getById(Integer billId) throws SQLException
+    public Bill getById(Integer id) throws SQLException
     {
-        String sql = "SELECT BillID, PatientID, BillDate, BillAmount, ModeOfPayment, PaymentStatus FROM dbo.Bill WHERE BillID = ?";
+        String sql = "SELECT BillNo, PatientID, Date, TotalAmount, ModeOfPayment FROM dbo.Bill WHERE BillNo = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setInt(1, billId);
+            stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery())
             {
                 if (rs.next())
@@ -104,15 +92,15 @@ public class BillDAO implements GenericDAO<Bill, Integer>
         }
         catch (SQLException e)
         {
-            // Memory fallback
+            // Fallback to local store
         }
-        return BILL_STORE.get(billId);
+        return BILL_STORE.get(id);
     }
 
     @Override
     public List<Bill> getAll() throws SQLException
     {
-        String sql = "SELECT BillID, PatientID, BillDate, BillAmount, ModeOfPayment, PaymentStatus FROM dbo.Bill ORDER BY BillID DESC";
+        String sql = "SELECT BillNo, PatientID, Date, TotalAmount, ModeOfPayment FROM dbo.Bill ORDER BY Date DESC";
         List<Bill> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
@@ -135,7 +123,7 @@ public class BillDAO implements GenericDAO<Bill, Integer>
     {
         BILL_STORE.put(bill.getBillId(), bill);
 
-        String sql = "UPDATE dbo.Bill SET PatientID = ?, BillDate = ?, BillAmount = ?, ModeOfPayment = ?, PaymentStatus = ? WHERE BillID = ?";
+        String sql = "UPDATE dbo.Bill SET PatientID = ?, Date = ?, TotalAmount = ?, ModeOfPayment = ? WHERE BillNo = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
@@ -143,8 +131,7 @@ public class BillDAO implements GenericDAO<Bill, Integer>
             stmt.setTimestamp(2, Timestamp.valueOf(bill.getBillDate()));
             stmt.setDouble(3, bill.getBillAmount());
             stmt.setString(4, bill.getModeOfPayment());
-            stmt.setString(5, bill.getPaymentStatus());
-            stmt.setInt(6, bill.getBillId());
+            stmt.setInt(5, bill.getBillId());
             return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)
@@ -154,15 +141,15 @@ public class BillDAO implements GenericDAO<Bill, Integer>
     }
 
     @Override
-    public boolean delete(Integer billId) throws SQLException
+    public boolean delete(Integer id) throws SQLException
     {
-        BILL_STORE.remove(billId);
+        BILL_STORE.remove(id);
 
-        String sql = "DELETE FROM dbo.Bill WHERE BillID = ?";
+        String sql = "DELETE FROM dbo.Bill WHERE BillNo = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql))
         {
-            stmt.setInt(1, billId);
+            stmt.setInt(1, id);
             return stmt.executeUpdate() > 0;
         }
         catch (SQLException e)

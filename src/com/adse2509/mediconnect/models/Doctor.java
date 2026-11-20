@@ -1,13 +1,17 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.models;
 
+import java.io.Serializable;
+
 /**
- * Model class representing an attending medical specialist at PMC.
- * Inherits common fields (id, name, phone) from the abstract {@link Person} class.
- * Mapped to the {@code dbo.Doctor} table in Microsoft SQL Server.
- *
+ * Model representing a doctor in the hospital system.
+ * 
  * @author Group 3
  */
-public class Doctor extends Person
+public class Doctor extends Person implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
@@ -18,38 +22,25 @@ public class Doctor extends Person
 
     public Doctor()
     {
-        super();
-        this.roomNumber = "Suite 101";
-        this.status = "Available";
     }
 
-    public Doctor(String doctorId, String name, String specialization, String phoneNo, String emailId)
+    public Doctor(String doctorId, String name, String specialization, String phone, String emailId, String roomNumber, String status)
     {
-        super(doctorId, name, phoneNo);
-        this.specialization = specialization;
-        this.emailId = emailId;
-        this.roomNumber = "Suite 101";
-        this.status = "Available";
-    }
-
-    public Doctor(String doctorId, String name, String specialization, String phoneNo, String emailId, String roomNumber, String status)
-    {
-        super(doctorId, name, phoneNo);
+        super(doctorId, name, phone);
         this.specialization = specialization;
         this.emailId = emailId;
         this.roomNumber = roomNumber;
         this.status = status;
     }
 
-    // Getters and Setters
     public String getDoctorId()
     {
-        return id;
+        return getId();
     }
 
     public void setDoctorId(String doctorId)
     {
-        this.id = doctorId;
+        setId(doctorId);
     }
 
     public String getSpecialization()
@@ -95,6 +86,6 @@ public class Doctor extends Person
     @Override
     public String toString()
     {
-        return name + " (" + specialization + " - " + id + ")";
+        return getName() + " - " + specialization + " (" + getId() + ")";
     }
 }

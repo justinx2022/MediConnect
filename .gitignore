@@ -6,6 +6,8 @@ dist/
 # IDE private settings
 nbproject/private/
 .vscode/
+.launches/
+.metadata/
 
 # OS files
 *.log
@@ -17,6 +19,3 @@ Thumbs.db
 
 # Receipts output
 receipts/
-
-# Markdown docs (not part of source)
-NOTEBOOKLM_STUDY_GUIDE.md

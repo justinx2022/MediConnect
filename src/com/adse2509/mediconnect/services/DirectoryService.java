@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.services;
 
 import com.adse2509.mediconnect.dao.BillDAO;
@@ -7,13 +11,14 @@ import com.adse2509.mediconnect.dao.PatientDetailsDAO;
 import com.adse2509.mediconnect.models.*;
 
 import java.sql.SQLException;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Service class responsible for aggregating records across Doctors, Patients, Checkups,
- * and Invoices for the "Display Information" screen (Process 1.4).
- *
+ * Service to aggregate directory records across doctors, patients, checkups, and bills.
+ * Provides search and statistical query operations.
+ * 
  * @author Group 3
  */
 public class DirectoryService
@@ -39,9 +44,9 @@ public class DirectoryService
         this.billDAO = billDAO;
     }
 
-    /* ==================================================================================
-     * AGGREGATION & SEARCH METHODS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // Aggregation and Search
+    // --------------------------------------------------
 
     public List<DirectoryItem> getAllDirectoryRecords() throws SQLException
     {
@@ -56,7 +61,8 @@ public class DirectoryService
                     d.getName(),
                     d.getSpecialization() + " (" + d.getRoomNumber() + ")",
                     "Phone: " + d.getPhone() + " | Email: " + d.getEmailId(),
-                    d.getStatus()
+                    d.getStatus(),
+                    ""
             ));
         }
 
@@ -69,33 +75,38 @@ public class DirectoryService
                     p.getName(),
                     "Age: " + p.getAge() + " (" + p.getGender() + ") | Blood: " + p.getBloodGroup(),
                     "Address: " + p.getAddress(),
-                    p.getStatus()
+                    p.getStatus(),
+                    ""
             ));
         }
 
-        // 3. Clinical Checkups (PatientDetails)
+        // 3. Checkups
         for (PatientDetails pd : patientDetailsDAO.getAll())
         {
+            String dStr = pd.getVisitDate() != null ? pd.getVisitDate().toLocalDate().toString() : "2026-11-20";
             unifiedList.add(new DirectoryItem(
                     "Checkup",
-                    pd.getPatientDetailsId(),
+                    String.valueOf(pd.getPatientDetailsId()),
                     "Patient: " + pd.getPatientId() + " (Dr: " + pd.getDoctorId() + ")",
                     "Ailment: " + pd.getAilment() + " (Visit #" + pd.getCheckupVisitNumber() + ")",
-                    pd.getDescription() + " | Cons: $" + pd.getConsFees() + ", Other: $" + pd.getOtherExpenses(),
-                    "Recorded"
+                    "Date: " + dStr + " | " + pd.getDescription() + " | Cons: $" + pd.getConsFees() + ", Other: $" + pd.getOtherExpenses(),
+                    "Recorded",
+                    dStr
             ));
         }
 
         // 4. Bills
         for (Bill b : billDAO.getAll())
         {
+            String dStr = b.getBillDate() != null ? b.getBillDate().toLocalDate().toString() : "2026-11-20";
             unifiedList.add(new DirectoryItem(
                     "Invoice",
                     "INV-" + b.getBillId(),
                     "Patient: " + b.getPatientId(),
                     "Amount: $" + String.format("%.2f", b.getBillAmount()) + " via " + b.getModeOfPayment(),
-                    "Date: " + b.getBillDate().toString().replace('T', ' ').substring(0, 16),
-                    b.getPaymentStatus()
+                    "Date: " + dStr,
+                    b.getPaymentStatus(),
+                    dStr
             ));
         }
 
@@ -124,5 +135,41 @@ public class DirectoryService
             }
         }
         return filtered;
+    }
+
+    // --------------------------------------------------
+    // Hospital Statistics and Date Queries
+    // --------------------------------------------------
+
+    public int getDoctorCount() throws SQLException
+    {
+        return doctorDAO.getAll().size();
+    }
+
+    public int getPatientCount() throws SQLException
+    {
+        return patientDAO.getAll().size();
+    }
+
+    public int getCheckupCount() throws SQLException
+    {
+        return patientDetailsDAO.getAll().size();
+    }
+
+    public List<DirectoryItem> getVisitsByDate(LocalDate date) throws SQLException
+    {
+        List<DirectoryItem> results = new ArrayList<>();
+        if (date == null) return results;
+
+        String dateStr = date.toString();
+        for (DirectoryItem item : getAllDirectoryRecords())
+        {
+            if (("Checkup".equalsIgnoreCase(item.getCategory()) || "Invoice".equalsIgnoreCase(item.getCategory()))
+                    && dateStr.equals(item.getRecordDate()))
+            {
+                results.add(item);
+            }
+        }
+        return results;
     }
 }

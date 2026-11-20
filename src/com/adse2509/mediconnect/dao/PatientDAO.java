@@ -1,3 +1,7 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.adse2509.mediconnect.dao;
 
 import com.adse2509.mediconnect.models.Patient;
@@ -12,9 +16,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Data Access Object performing CRUD operations against the {@code dbo.Patient} table.
- * Implements the {@link GenericDAO} contract from the ADSE 2509 syllabus.
- *
+ * Data Access Object for Patient records in the database.
+ * 
  * @author Group 3
  */
 public class PatientDAO implements GenericDAO<Patient, String>
@@ -23,11 +26,10 @@ public class PatientDAO implements GenericDAO<Patient, String>
 
     static
     {
-        // Seed patients matching PMC Case Study
-        PATIENT_STORE.put("P001", new Patient("P001", "Robert Chen", "+254700111222", "142 Market Street, Nairobi", "M", 45, "O+", 78.5, 175.0, "Active Record"));
-        PATIENT_STORE.put("P002", new Patient("P002", "Amara Okafor", "+254700333444", "88 Palm Grove, Westlands", "F", 32, "A+", 62.0, 168.0, "Active Record"));
-        PATIENT_STORE.put("P003", new Patient("P003", "James Miller", "+254700555666", "22 Riverside Drive, Kilimani", "M", 59, "B-", 84.0, 180.0, "Active Record"));
-        PATIENT_STORE.put("P004", new Patient("P004", "Eleanor Vance", "+254700777888", "55 Hillview Terrace, Karen", "F", 42, "AB+", 68.0, 170.0, "Active Record"));
+        PATIENT_STORE.put("P001", new Patient("P001", "Alice Kamau", "14 Riverside Drive, Nairobi", "+254711223344", 29, "F", "A+", 62.5, 168.0, "Active"));
+        PATIENT_STORE.put("P002", new Patient("P002", "Brian Ochieng", "45 Westlands Rd, Nairobi", "+254722334455", 42, "M", "O+", 78.0, 180.5, "Active"));
+        PATIENT_STORE.put("P003", new Patient("P003", "Catherine Nduta", "88 Kilimani Lane, Nairobi", "+254733445566", 35, "F", "B+", 68.0, 162.0, "Active"));
+        PATIENT_STORE.put("P004", new Patient("P004", "Daniel Mutua", "12 Parklands Ave, Nairobi", "+254744556677", 51, "M", "AB-", 84.0, 175.0, "Active"));
     }
 
     private Patient mapRow(ResultSet rs) throws SQLException
@@ -35,10 +37,10 @@ public class PatientDAO implements GenericDAO<Patient, String>
         return new Patient(
                 rs.getString("PatientID"),
                 rs.getString("Name"),
-                "", // Phone optional in basic Patient table per guide
                 rs.getString("Address"),
-                rs.getString("Gender"),
+                "",
                 rs.getInt("Age"),
+                rs.getString("Gender"),
                 rs.getString("BloodGroup"),
                 rs.getDouble("Weight"),
                 rs.getDouble("Height"),
@@ -46,9 +48,9 @@ public class PatientDAO implements GenericDAO<Patient, String>
         );
     }
 
-    /* ==================================================================================
-     * CRUD OPERATIONS
-     * ================================================================================== */
+    // --------------------------------------------------
+    // CRUD Operations
+    // --------------------------------------------------
 
     @Override
     public boolean create(Patient patient) throws SQLException
@@ -72,7 +74,6 @@ public class PatientDAO implements GenericDAO<Patient, String>
         }
         catch (SQLException e)
         {
-            // In-memory fallback
             return true;
         }
     }
@@ -95,7 +96,7 @@ public class PatientDAO implements GenericDAO<Patient, String>
         }
         catch (SQLException e)
         {
-            // Return from memory store
+            // Fallback to local store
         }
         return PATIENT_STORE.get(patientId);
     }
